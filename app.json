@@ -9,7 +9,10 @@
     "backgroundColor": "#070a14",
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.asmin.basic.bonfire"
+      "bundleIdentifier": "com.asmin.basic.bonfire",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "extra": {
       "eas": {
