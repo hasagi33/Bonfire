@@ -27,21 +27,18 @@
 
 ## Autonomous Fixes Allowed
 
-- Under the current no_autonomy classification, make no autonomous code changes; only report findings.
-- If autonomy is later permitted, limit to prettier formatting and eslint --fix on non-protected files under src/components/Settings or __tests__ with no behavior change.
+- `lint_format`: prettier formatting and eslint --fix on non-protected files.
+- `dead_code`: remove unused exports and files.
 
 ## Assisted Fixes Allowed
 
-- Type-level fixes under strict TypeScript that preserve runtime behavior in src/components and src/hooks, reviewed by a maintainer.
-- Adding missing unit tests for contract guarantees (for example, fire.ts behavior table rows or settingsStore invalid-color fallback) without changing production logic.
-- Dependency patch updates for jest-expo, eslint-config-expo, or @types packages, verified by the full test run.
+- `tests`: add missing unit tests for contract guarantees without changing production logic.
+- `dependency_patch`: patch updates for jest-expo, eslint-config-expo, or @types packages.
+- `layer_violation_repair`: repair imports that cross the documented layer boundaries.
 
 ## Advisory-Only Areas
 
-- Fire scoring rules (gap tolerance, strength contribution curve, extinguish policy) because they are product decisions defined in the spec.
-- Skia and Reanimated rendering performance on device, which needs manual inspection.
-- Achievement thresholds and unlock timing for collectible flame styles.
-- Fire Health labels (Faint, Steady, Bright, Radiant) and atmosphere tuning from local time.
+- `complexity_reduction`: simplify complex functions; needs human review.
 
 ## Architecture Boundaries
 
