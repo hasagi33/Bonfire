@@ -29,13 +29,51 @@ interface DayCellProps {
   onPress?: (dateKey: string) => void;
 }
 
+function realCellStyle(
+  kind: DayKind,
+  isToday: boolean | undefined,
+  selected: boolean | undefined,
+  pressed: boolean,
+  tappable: boolean,
+  heat: ReturnType<typeof heatStyle> | undefined,
+) {
+  const scored = heat !== undefined;
+  return [
+    styles.real,
+    kind === 'future' && styles.future,
+    kind === 'missed' && styles.missed,
+    isToday && styles.today,
+    scored && { backgroundColor: heat.background, borderWidth: 0 },
+    // the white "1" day keeps a token-defined hairline so it doesn't
+    // read as an empty cell (today/selected rings below still win)
+    scored && heat.border !== undefined && { borderWidth: 1.4, borderColor: heat.border },
+    scored && isToday && styles.scoredToday,
+    selected && styles.selected,
+    pressed && tappable && styles.pressed,
+  ];
+}
+
+function numberTextStyle(
+  kind: DayKind,
+  isToday: boolean | undefined,
+  heat: ReturnType<typeof heatStyle> | undefined,
+) {
+  return [
+    styles.num,
+    kind === 'future' && styles.numFuture,
+    kind === 'missed' && styles.numMissed,
+    isToday && heat === undefined && styles.numToday,
+    heat !== undefined && { color: heat.color },
+  ];
+}
+
 function DayCell({ dateKey, dayNumber, kind, score, isToday, selected, onPress }: DayCellProps) {
   if (dateKey === null || kind === null) {
     return <View style={styles.cell} />; // blank padding
   }
 
-  const scored = kind === 'scored' && score !== undefined;
-  const heat = scored ? heatStyle(score as Score) : undefined;
+  const heat = kind === 'scored' && score !== undefined ? heatStyle(score) : undefined;
+  const scored = heat !== undefined;
   const tappable = kind !== 'future';
 
   return (
@@ -47,30 +85,8 @@ function DayCell({ dateKey, dayNumber, kind, score, isToday, selected, onPress }
       accessibilityState={{ disabled: !tappable, selected }}
       accessibilityLabel={accessibilityLabel(dateKey, kind, score)}>
       {({ pressed }) => (
-        <View
-          style={[
-            styles.real,
-            kind === 'future' && styles.future,
-            kind === 'missed' && styles.missed,
-            isToday && styles.today,
-            scored && { backgroundColor: heat!.background, borderWidth: 0 },
-            // the white "1" day keeps a token-defined hairline so it doesn't
-            // read as an empty cell (today/selected rings below still win)
-            scored && heat!.border !== undefined && { borderWidth: 1.4, borderColor: heat!.border },
-            scored && isToday && styles.scoredToday,
-            selected && styles.selected,
-            pressed && tappable && styles.pressed,
-          ]}>
-          <Text
-            style={[
-              styles.num,
-              kind === 'future' && styles.numFuture,
-              kind === 'missed' && styles.numMissed,
-              isToday && !scored && styles.numToday,
-              scored && { color: heat!.color },
-            ]}>
-            {dayNumber}
-          </Text>
+        <View style={realCellStyle(kind, isToday, selected, pressed, tappable, heat)}>
+          <Text style={numberTextStyle(kind, isToday, heat)}>{dayNumber}</Text>
 
           {/* hollow dot under a missed day */}
           {kind === 'missed' && <View style={styles.missedDot} />}
