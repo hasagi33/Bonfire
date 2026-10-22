@@ -288,3 +288,5 @@ npm run lint
 
 The tests cover pure fire rules, metrics, achievements, Fire Health, storage
 cleaning, hooks, and key component wiring.
+
+QA COD-124 maintainer commit after merging the constitution PR.
