@@ -83,3 +83,9 @@
 
 - Prefer small PRs scoped to one maintenance category.
 - Do not auto-merge Gardener PRs.
+
+## Verification Commands
+
+- `npm run lint`
+- `npx jest`
+- `node qa-probe.js`
