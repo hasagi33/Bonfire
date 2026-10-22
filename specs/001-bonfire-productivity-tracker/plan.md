@@ -208,3 +208,14 @@ settings/color, particles, loading state, and the design-fidelity review against
 | Migrate to **Expo** | User mandate; smooth native-module + build tooling for Skia/Reanimated | Bare RN CLI works but the user explicitly requires Expo |
 | **react-native-skia** | The flame must look almost identical to the design (blur, gradients, screen blend, glow) and hold ≥120 FPS | Stacked blurred RN `Animated.View`s (the prior build) cannot reproduce the blend/blur look or hold frame rate |
 | **reanimated** + **gesture-handler** | UI-thread flame animation (120 FPS) and the swipe-up calendar sheet | JS-driven `Animated` drops frames with this many layers; sheet drag needs native gestures |
+
+<!-- gardener-maintenance-note:start 7dd91afa-7d83-4680-a4bc-0a300d711f74 -->
+## Gardener maintenance note
+
+Gardener opened this maintenance PR from plan `7dd91afa-7d83-4680-a4bc-0a300d711f74`.
+
+- Goal: Manual maintenance run.
+- Evidence: Manual trigger payload.
+- Entropy impact: Manual verification.
+- Verification: Review; do not merge without human approval.
+<!-- gardener-maintenance-note:end 7dd91afa-7d83-4680-a4bc-0a300d711f74 -->
