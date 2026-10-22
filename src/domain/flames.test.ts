@@ -13,9 +13,23 @@ import type {
   ShapeVariant,
   EdgeStyle,
   Achievement,
+  ConditionKind,
 } from './flames';
 
 const KEBAB_CASE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+
+const CONDITION_KINDS: ConditionKind[] = [
+  'runDays',
+  'runStrength',
+  'strongDaysInRun',
+  'runStrengthAndDays',
+  'consecutivePerfect',
+  'unbrokenChain',
+  'unbrokenChainMinScore',
+  'perfectCalendarWeek',
+  'consecutivePerfectWeeks',
+  'crossStrength',
+];
 
 const SHAPE_VARIANTS: ShapeVariant[] = [
   'classic', 'lance', 'split', 'forked', 'twin', 'wide', 'warped',
@@ -124,6 +138,39 @@ describe('time and streak achievement shapes', () => {
       expect(f.achievement.requirement.trim().length).toBeGreaterThan(0);
     }
   });
+
+  it('uses only known ConditionKind values for every achievement', () => {
+    for (const f of FLAMES) {
+      if (!f.achievement) continue;
+      expect(CONDITION_KINDS).toContain(f.achievement.kind);
+    }
+  });
+
+  it('gives every achievement a valid type (streak or time) that matches its tier', () => {
+    for (const f of FLAMES) {
+      if (!f.achievement) continue;
+      expect(['streak', 'time']).toContain(f.achievement.type);
+      if (f.tier === 'time') expect(f.achievement.type).toBe('time');
+      if (f.tier === 'streak') expect(f.achievement.type).toBe('streak');
+    }
+  });
+
+  it('gives each achievement a params object of finite numbers', () => {
+    for (const f of FLAMES) {
+      if (!f.achievement) continue;
+      expect(typeof f.achievement.params).toBe('object');
+      for (const value of Object.values(f.achievement.params)) {
+        expect(Number.isFinite(value)).toBe(true);
+      }
+    }
+  });
+
+  it('never sets windowDays on a streak achievement, even as zero or null', () => {
+    for (const f of FLAMES) {
+      if (f.achievement?.type !== 'streak') continue;
+      expect('windowDays' in f.achievement).toBe(false);
+    }
+  });
 });
 
 describe('gradients and palettes', () => {
@@ -156,6 +203,20 @@ describe('gradients and palettes', () => {
       const embered = emberedPalette(f.palette);
       expect(f.embered).toEqual(embered);
       expect(f.embered).not.toEqual(f.palette);
+    }
+  });
+
+  it('keeps the embered core no brighter than the active core', () => {
+    for (const f of FLAMES) {
+      expect(brightness(f.embered.core)).toBeLessThanOrEqual(brightness(f.palette.core));
+    }
+  });
+
+  it('keeps every gradient entry as a 6-digit or 3-digit hex color', () => {
+    for (const f of FLAMES) {
+      for (const stop of f.gradient) {
+        expect(stop).toMatch(/^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/);
+      }
     }
   });
 });
