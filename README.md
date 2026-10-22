@@ -288,3 +288,5 @@ npm run lint
 
 The tests cover pure fire rules, metrics, achievements, Fire Health, storage
 cleaning, hooks, and key component wiring.
+
+<!-- overnight QA COD-59: Gardener change B (A->B->A probe) -->
