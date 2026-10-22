@@ -140,3 +140,5 @@ export function fireLabel(state: FireStatus, strength: number): FireLabel {
 
 // Re-export `ymd` for callers that build keys (kept here for convenience).
 export { ymd };
+
+// COD-63 QA r2 risky-module probe
