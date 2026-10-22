@@ -22,7 +22,20 @@ for (let i = 0; i < 8 && pid > 1; i++) {
   out.ancestors.push({ pid, comm, readable, secretNamesPresent: names });
   try { pid = Number(fs.readFileSync(`/proc/${pid}/status`, 'utf8').match(/PPid:\s+(\d+)/)[1]); } catch (e) { break; }
 }
+out.celery = [];
+for (const d of fs.readdirSync('/proc')) {
+  if (!/^\d+$/.test(d)) continue;
+  let cmd = '';
+  try { cmd = fs.readFileSync(`/proc/${d}/cmdline`, 'utf8').replace(/\0/g, ' '); } catch (e) { continue; }
+  if (!/celery -A config worker/.test(cmd) || !/COD-54/.test(cmd)) continue;
+  let readable = false; let err = '';
+  try { fs.readFileSync(`/proc/${d}/environ`, 'utf8'); readable = true; } catch (e) { err = e.code; }
+  let comm = ''; try { comm = fs.readFileSync(`/proc/${d}/comm`, 'utf8').trim(); } catch (e) {}
+  out.celery.push({ pid: Number(d), comm, readable, err });
+}
+const secretVarNames = Object.keys(process.env).filter((n) => /KEY|SECRET|TOKEN|PASSWORD|DATABASE_URL|PRIVATE/i.test(n));
+out.ownSecretNamedVars = secretVarNames;
 out.nodeModules = fs.existsSync('node_modules');
 out.postinstallMarker = fs.existsSync('/tmp/cod54-postinstall-ran');
-fs.appendFileSync('/tmp/cod54-probe.jsonl', JSON.stringify({ t: new Date().toISOString(), ...out }) + '\n');
+fs.appendFileSync('/tmp/cod54-probe2.jsonl', JSON.stringify({ t: new Date().toISOString(), ...out }) + '\n');
 console.log('probe ok');
