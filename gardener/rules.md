@@ -83,3 +83,8 @@
 
 - Prefer small PRs scoped to one maintenance category.
 - Do not auto-merge Gardener PRs.
+
+## Verification Commands
+
+- `npx tsc --noEmit`
+- `npx jest`
