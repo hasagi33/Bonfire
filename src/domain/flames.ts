@@ -217,26 +217,39 @@ export const DEFAULT_VISUAL_PROFILE: VisualProfile = {
  * (missing sections, empty tongue list…) falls back to the Amber-like default.
  * This is the renderer's single safety gate — it never throws.
  */
-export function safeVisualProfile(profile?: VisualProfile | null): VisualProfile {
-  if (
-    profile &&
-    typeof profile === 'object' &&
-    profile.shape &&
+function hasValidShape(profile: VisualProfile): boolean {
+  return (
+    !!profile.shape &&
     typeof profile.shape.variant === 'string' &&
     Array.isArray(profile.shape.tongues) &&
-    profile.shape.tongues.length > 0 &&
-    profile.motion &&
-    typeof profile.motion.speed === 'number' &&
-    profile.motion.speed > 0 &&
+    profile.shape.tongues.length > 0
+  );
+}
+
+function hasValidMotion(profile: VisualProfile): boolean {
+  return !!profile.motion && typeof profile.motion.speed === 'number' && profile.motion.speed > 0;
+}
+
+function hasValidAura(profile: VisualProfile): boolean {
+  return !!profile.aura && typeof profile.aura.kind === 'string';
+}
+
+function hasValidSections(profile: VisualProfile): boolean {
+  return (
     Array.isArray(profile.particles) &&
-    profile.aura &&
-    typeof profile.aura.kind === 'string' &&
     Array.isArray(profile.accents) &&
     profile.designRef != null
-  ) {
-    return profile;
-  }
-  return DEFAULT_VISUAL_PROFILE;
+  );
+}
+
+export function safeVisualProfile(profile?: VisualProfile | null): VisualProfile {
+  if (!profile || typeof profile !== 'object') return DEFAULT_VISUAL_PROFILE;
+  const valid =
+    hasValidShape(profile) &&
+    hasValidMotion(profile) &&
+    hasValidAura(profile) &&
+    hasValidSections(profile);
+  return valid ? profile : DEFAULT_VISUAL_PROFILE;
 }
 
 // One catalog flame: its identity, look, and (optional) unlock achievement.
