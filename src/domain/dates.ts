@@ -41,9 +41,6 @@ export function todayKey(): DateKey {
 }
 
 /** Is `key` strictly before `today`? Zero-padded keys compare as calendar order. */
-export function isPast(key: DateKey, today: DateKey): boolean {
-  return key < today;
-}
 
 /** Is `key` strictly after `today`? Used to reject scoring future days. */
 export function isFuture(key: DateKey, today: DateKey): boolean {
