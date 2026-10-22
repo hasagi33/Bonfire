@@ -1,3 +1,4 @@
+// Gardener QA: behaviour-preserving comment.
 /**
  * flames.ts — THE editable flame catalog (the single source of truth).
  *
