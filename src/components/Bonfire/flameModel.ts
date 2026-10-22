@@ -1,3 +1,4 @@
+// Gardener QA: behaviour-preserving comment.
 /**
  * flameModel.ts — pure math that turns a FireState + VisualProfile into render
  * descriptors.
