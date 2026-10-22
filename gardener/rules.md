@@ -3,15 +3,22 @@
 
 ## Protected Modules
 
-- `src/domain/fire.ts` because Fire strength, two-miss extinguish, and relight rules are the core scoring logic defined in the fire-engine contract.
-- `src/domain/achievements.ts` because Streak and time achievement conditions gate flame unlocks, and time windows must follow the D through D+W rules exactly.
+- `src/domain/achievements.ts` because Encodes the streak-specific and time-specific unlock rules (D through D+W windows, no banking, backfill-after-window stays locked) that the spec treats as authoritative.
 - `src/domain/flames.ts` because The flame catalog holds the flame style data (unlock conditions, palettes, rarity, visual profiles); changes here are critical and need human review because unlock and selection identity depend on it. (from specs/004-flame-visual-profiles/spec.md#Key Entities)
-- `src/components/Bonfire/flameModel.ts` because Maps strength and unlock state to visual parameters; changes can silently alter the required flame fidelity and embered-variant behavior.
-- `src/hooks/useSettings.ts` because Owns the persisted flame selection and v1-to-v2 settings migration, so regressions would lose user choice across restarts.
-- `src/theme/palettes.ts` because Holds flame palettes from which glow and particle colors are derived; the default Amber look must be preserved.
-- `src/data/settingsStore.ts` because AsyncStorage persistence layer for settings; it must keep the v2 schema and fall back to amber on invalid ids.
-- `src/components/Calendar/CalendarSheet.tsx` because Carries the swipe-up open and down-only close gestures and backward-only month paging, which are specified behavior.
-- `src/screens/BonfireScreen.tsx` because Top-level single-screen composition that wires the fire, settings gear tap target, and calendar gesture surface together.
+- `src/domain/fire.ts` because Fire engine contract: strength sums per-day contributions (1→0 through 5→+4), two consecutive missed past days extinguish, and any score relights from 0; referenced by the spec contract though not in the analysis signals.
+- `src/components/Bonfire/flameModel.ts` because Derives flame visual state from strength and unlock status, including soft-capped on-screen size while strength keeps rising and the embered variant of locked flames.
+- `src/components/Bonfire/FireScene.tsx` because Composes the Skia scene including out-state precedence (charred logs and smoke wisp, no flame or embers) and palette-derived glow; visual changes here need spec review.
+- `src/components/Bonfire/Flame.tsx` because Skia flame rendering that the spec requires to match the design reference closely, so changes can break visual fidelity.
+- `src/components/Bonfire/Embers.tsx` because Rising particle intensity is tied to strength and is shown only while lit; behavior is spec-defined.
+- `src/components/Bonfire/Hearth.tsx` because Hearth warm wash must derive from the active flame palette while preserving the default Amber look.
+- `src/components/Bonfire/FireCaption.tsx` because Displays visual-only Fire Health (Faint, Steady, Bright, Radiant) derived from recent score quality; must not feed back into fire logic.
+- `src/components/Calendar/CalendarSheet.tsx` because Owns swipe-up open and down-only close gestures, backward-only month paging, and missed-day indication; gesture conflicts with the settings gear are a known risk.
+- `src/components/Calendar/ScorePickerBar.tsx` because Score input for days today or in the past (1 to 5, clearable) that feeds the fire engine; the heat ramp must stay shared with day cells.
+- `src/components/Settings/FlameGallery.tsx` because Enforces the locked-flame selection guard: a locked flame tap must give visual feedback and must never equip or persist.
+- `src/components/Settings/SettingsSheet.tsx` because Settings entry point for flame color and gallery access; the 44pt gear target and gallery routing are spec-specified.
+- `src/hooks/useSettings.ts` because Persists the flame id under the v2 schema, migrates the v1 flameColor setting, and falls back to amber on invalid or corrupt ids.
+- `src/screens/BonfireScreen.tsx` because Main single-screen view with a loading placeholder before saved entries load and the swipe-up surface that must not swallow taps to the gear.
+- `src/theme/palettes.ts` because Palette source for flame halo, ground glow, and particle fades; the default Amber look is a spec requirement.
 - `src/domain/fire.ts` because Pure fire engine that is the test oracle for fire state; contract forbids I/O, React, or Date.now(), so changes can silently alter every derived fire state.
 - `src/data/entriesStore.ts` because Sole persistence boundary for scores and notes; the contract requires loadEntries never to throw and a round trip to deep-equal saved data.
 - `src/data/settingsStore.ts` because Persists the flame color preference; the contract requires invalid values to fall back to Amber and round trips to be exact.
@@ -27,12 +34,13 @@
 
 ## Never-Touch Paths
 
-- `specs/**` because Product specs and contracts are the authoritative statement of scope and fix/no-fix policy, so automated changes must not rewrite them.
+- `gardener/**` because Contains the maintenance tool's own policy and automation; automated changes must not edit the tool that governs them.
+- `specs/**/contracts/**` because Frozen contracts (fire engine, settings store, gesture surface, locked-selection guard, heat ramp, glow derivation) are authoritative and must be changed only by humans through the spec process.
 - `src/domain/fireStrength.ts` because Fire Health must not change fire strength math, so the fire strength computation is off-limits to Fire Health changes. (from specs/007-fire-health/spec.md#Feature Specification: Fire Health)
 - `**/.env*` because secrets must never be modified by Gardener.
 - `**/secrets/**` because secret material requires human handling.
-- `gardener/**` because Gardener's own rules change only through a reviewed constitution PR.
 - `GARDENER.md` because Gardener's own rules change only through a reviewed constitution PR.
+- `specs/**` because the product specs are the source of truth Gardener checks code against.
 - `specs/**` because Product specs and contracts are the authoritative statement of scope and fix policy and are maintained by humans.
 - `.agents/skills/**` because Agent skill files define project workflow instructions and are not application code.
 - `.claude/skills/**` because Agent skill files define project workflow instructions and must stay in sync with the spec kit tooling.
@@ -47,16 +55,16 @@
 ## Assisted Fixes Allowed
 
 - `dependency_patch`: kept from the current constitution
-- `tests`: Adding unit tests for pure domain logic (fire engine, achievements, flame catalog) is low risk and verifies spec rules without changing behavior
+- `tests`: Adding or fixing Jest tests under __tests__ only asserts existing spec behavior and does not change app code paths, so it is low-risk to automate
 - `refactoring`: Replacing the color picker and removing dead FlameColor-only UI paths is a change that needs review; FlameColor is kept only for v1 migration (source: specs/002-achievement-flame-unlocks/tasks.md#Tasks: Achievement-Locked Flame Styles)
-- `complexity_reduction`: Simplifying flameModel.ts, FireScene.tsx, or CalendarSheet.tsx touches protected rendering and gesture logic and needs human review of visual and gesture parity
+- `complexity_reduction`: Flagged files (flameModel.ts, FireScene.tsx, CalendarSheet.tsx, achievements.ts) carry spec-defined rendering and unlock rules, so simplifications need human review against the contracts
 - Type-level fixes under strict TypeScript that preserve runtime behavior in src/components and src/hooks, reviewed by a maintainer.
 - Adding missing unit tests for contract guarantees (for example, fire.ts behavior table rows or settingsStore invalid-color fallback) without changing production logic.
 - Dependency patch updates for jest-expo, eslint-config-expo, or @types packages, verified by the full test run.
 
 ## Advisory-Only Areas
 
-- `migrations`: The AsyncStorage settings schema moved from v1 flameColor to v2 flame id; changes to that migration should be advised on, not automated
+- `migrations`: The v1 flameColor to v2 flame-id settings migration is a one-way local data change; only advise, never rewrite, because persisted user data is not recoverable
 - Fire scoring rules (gap tolerance, strength contribution curve, extinguish policy) because they are product decisions defined in the spec.
 - Skia and Reanimated rendering performance on device, which needs manual inspection.
 - Achievement thresholds and unlock timing for collectible flame styles.
@@ -125,19 +133,23 @@
 - Fire Health must introduce no new runtime packages, reuse the existing Expo, Skia, and Reanimated stack, and must not add timers, animation loops, or per-frame JS work. (sources: specs/007-fire-health/plan.md#Implementation Plan: Fire Health)
 - Fire Health must be suppressed when the fire is not lit. (sources: specs/007-fire-health/tasks.md#Tasks: Fire Health)
 - The Fire Health module lives at src/domain/fireHealth.ts, and its derived state is threaded from BonfireScreen into FireScene and FireCaption rather than computed in presentation components. (sources: specs/007-fire-health/tasks.md#Tasks: Fire Health)
+- Validate Fire Health against specs/007-fire-health/quickstart.md, with lint and tests passing, before merge. (sources: specs/007-fire-health/tasks.md#Tasks: Fire Health)
 - Hot paths (fireHealth, Flame, BonfireScreen) should avoid unnecessary re-renders and keep memoization simple. (sources: specs/007-fire-health/tasks.md#Tasks: Fire Health)
-- Keep the score-to-strength mapping (1→+0, 2→+1, 3→+2, 4→+3, 5→+4) and the two-miss extinguish rule byte-for-byte equivalent when refactoring fire logic.
-- When simplifying flameModel.ts, assert identical outputs for every strength and unlock state before and after the change.
-- Do not change flame ids in the catalog, since they are persisted, and invalid ids must fall back to amber.
-- Preserve the embered variant rule: locked active flames render dim and desaturated, and Amber never renders embered.
-- Keep the swipe-up calendar gesture and the settings gear tap target (at least 52×52) intact when restructuring CalendarSheet or BonfireScreen.
-- Limit test additions to behavior already specified, and do not introduce new flame or achievement rules through test-only changes.
-- ⚠ Conflicts with never-touch `specs/**`; never-touch wins: The feature must be validated against specs/007-fire-health/quickstart.md with lint and tests passing before merge. (source: specs/007-fire-health/tasks.md#Tasks: Fire Health)
+- When refactoring fire logic, keep the per-day strength contributions (1→0, 2→+1, 3→+2, 4→+3, 5→+4) and the two-consecutive-miss rule exactly as specified.
+- Keep the __DEV__-only advance-day control, since it exists so extinguish behavior can be tested without waiting, and it must not ship in release builds.
+- When simplifying flameModel.ts, preserve the soft-capped on-screen size while underlying strength keeps increasing without limit.
+- When simplifying CalendarSheet.tsx, keep swipe-up opening from the closed state, down-only closing that clears the selected day, and backward-only month paging.
+- Do not change locked-flame selection: a tap on a locked flame must give feedback and must never set or persist the active flame.
+- Do not persist anything for locked-to-unlocked feedback; it is transient UI only.
+- Keep the Amber default and never render Amber in its embered variant.
+- Changes to palettes.ts or glow derivation must keep the default Amber look visually unchanged.
+- Keep score buttons and day cells on the one shared heat ramp from tokens.ts, with score 1 outlined and text meeting 4.5:1 contrast.
+- Keep the settings gear at a 44pt minimum (52×52) and ensure it still opens the flame gallery.
 - ⚠ Temporary constraint, not a permanent never-touch/protected rule (demoted from path rules): `src/domain/fire.ts` — computeFire in src/domain/fire.ts must not be modified for this feature, since richer metrics belong in the new fireMetrics module (source: specs/002-achievement-flame-unlocks/tasks.md#Tasks: Achievement-Locked Flame Styles)
 - ⚠ Temporary constraint, not a permanent never-touch/protected rule (demoted from path rules): `__tests__/fire.test.ts` — The fire test file must stay unchanged for this feature (source: specs/002-achievement-flame-unlocks/tasks.md#Tasks: Achievement-Locked Flame Styles)
+- ⚠ Temporary constraint, not a permanent never-touch/protected rule (demoted from path rules): `src/components/Bonfire/flameModel.ts` — Flame profile interpretation and strength-response logic sit here; changes must keep fire strength math and visual fallback behavior intact, so they need human review (source: specs/004-flame-visual-profiles/tasks.md#Tasks: Flame Visual Profiles)
 - ⚠ Temporary constraint, not a permanent never-touch/protected rule (demoted from path rules): `src/components/Bonfire/Flame.tsx` — The Skia flame render hot path must keep >=120 FPS rendering; changes here require human review for performance and visual parity (source: specs/004-flame-visual-profiles/tasks.md#Tasks: Flame Visual Profiles)
 - ⚠ Temporary constraint, not a permanent never-touch/protected rule (demoted from path rules): `src/components/Bonfire/Embers.tsx` — Particle rendering in the flame hot path must keep >=120 FPS and avoid visual clutter; changes require human review (source: specs/004-flame-visual-profiles/tasks.md#Tasks: Flame Visual Profiles)
-- ⚠ Temporary constraint, not a permanent never-touch/protected rule (demoted from path rules): `src/components/Bonfire/flameModel.ts` — Flame profile interpretation and strength-response logic sit here; changes must keep fire strength math and visual fallback behavior intact, so they need human review (source: specs/004-flame-visual-profiles/tasks.md#Tasks: Flame Visual Profiles)
 
 ## Architecture Boundaries
 
@@ -187,42 +199,34 @@
 - The locked/unlocked state is derived from achievement entries in hooks and must not be stored in settingsStore; the store must not access derived achievement state. (sources: specs/003-ui-flame-polish/research.md#Research: UI & Flame Polish Fixes)
 - The score button and day cell heat colors must come from the single heat-ramp token source in tokens.ts so buttons and day cells share it, components must not hardcode heat colors or borders, and the five heat-ramp backgrounds must be pairwise distinct. (sources: specs/003-ui-flame-polish/research.md#R3. Score heat ramp white→red (P3); specs/003-ui-flame-polish/tasks.md#Tasks: UI & Flame Polish Fixes; specs/003-ui-flame-polish/tasks.md#Implementation for User Story 4)
 - The renderer reads profile data and selects shared effect helpers, and must not switch on specific flame ids for drawing behavior. (sources: specs/004-flame-visual-profiles/contracts/renderer-profile-contract.md#Contract: Generic Flame Renderer)
-- Particle variants must be drawn from the shared seven particle variants (sparks, motes, ash, bubbles, shards, wisps, stars) driven by profile mixes, with no per-flame particle components. (sources: specs/004-flame-visual-profiles/contracts/particle-variants.md#Contract: Particle Variants; specs/004-flame-visual-profiles/research.md#Research: Flame Visual Profiles)
-- Profile data must describe identity rather than implementation branches, and must not require renderer branches by flame id. (sources: specs/004-flame-visual-profiles/contracts/visual-profile-data.md#Contract: Visual Profile Data)
-- The renderer must remain generic and data-driven, selecting shared effect families by profile tokens and never hard-coding behavior by flame id. (sources: specs/004-flame-visual-profiles/contracts/visual-profile-data.md#Contract: Visual Profile Data; specs/004-flame-visual-profiles/plan.md#Implementation Plan: Flame Visual Profiles)
-- Palette remains the source of rendered colors, and the existing palette plus dim behavior continues to drive the locked embered flame state. (sources: specs/004-flame-visual-profiles/contracts/renderer-profile-contract.md#Contract: Generic Flame Renderer; specs/004-flame-visual-profiles/plan.md#Implementation Plan: Flame Visual Profiles)
-- The dim value remains the source of locked embered energy reduction. (sources: specs/004-flame-visual-profiles/contracts/renderer-profile-contract.md#Contract: Generic Flame Renderer)
+- Particle rendering must use the shared seven particle variants (sparks, motes, ash, bubbles, shards, wisps, stars) driven by profile mixes, with no per-flame or per-particle-type components. (sources: specs/004-flame-visual-profiles/contracts/particle-variants.md#Contract: Particle Variants; specs/004-flame-visual-profiles/research.md#Research: Flame Visual Profiles)
+- Profile data must describe identity rather than implementation branches, and renderer code must not branch on flame id; it may select shared effect families by profile tokens only. (sources: specs/004-flame-visual-profiles/contracts/visual-profile-data.md#Contract: Visual Profile Data; specs/004-flame-visual-profiles/plan.md#Implementation Plan: Flame Visual Profiles)
+- Palette remains the source of rendered colors, and locked embered flame state uses the existing palette plus dim behavior, where dim is the source of locked embered energy reduction. (sources: specs/004-flame-visual-profiles/contracts/renderer-profile-contract.md#Contract: Generic Flame Renderer; specs/004-flame-visual-profiles/plan.md#Implementation Plan: Flame Visual Profiles)
 - Out-state precedence is unchanged: live flame effects do not draw when fire is out. (sources: specs/004-flame-visual-profiles/contracts/renderer-profile-contract.md#Contract: Generic Flame Renderer)
 - Existing id, achievement, palette, embered, drift, and rarity meanings stay unchanged in FlameStyle. (sources: specs/004-flame-visual-profiles/contracts/visual-profile-data.md#Contract: Visual Profile Data)
-- Flame visual profiles are stored on each FlameStyle row in the existing flame catalog, so flame identity, palette, rarity, and achievement remain a single source of truth. (sources: specs/004-flame-visual-profiles/plan.md#Implementation Plan: Flame Visual Profiles)
-- visualProfile values must never be stored in AsyncStorage, and settings storage persists only the flame id with no visualProfile data. (sources: specs/004-flame-visual-profiles/contracts/visual-profile-data.md#Contract: Visual Profile Data; specs/004-flame-visual-profiles/tasks.md#Tests for User Story 1)
-- visualProfile must not change achievement, palette, embered, or persisted selected-flame data. (sources: specs/004-flame-visual-profiles/data-model.md#Data Model: Flame Visual Profiles)
-- Profile data is static catalog data, must not be persisted per user, must not require any new persisted user data, and the storage schema stays unchanged. (sources: specs/004-flame-visual-profiles/plan.md#Implementation Plan: Flame Visual Profiles; specs/004-flame-visual-profiles/spec.md#Functional Requirements)
-- The profile strength response reads existing fire strength only and must not change the calculated fire strength value, unlock state, or stored settings. (sources: specs/004-flame-visual-profiles/data-model.md#Data Model: Flame Visual Profiles; specs/004-flame-visual-profiles/spec.md#Feature Specification: Flame Visual Profiles)
-- Accent visibility may scale with strength but must not alter fire strength math. (sources: specs/004-flame-visual-profiles/data-model.md#AccentProfile)
+- visualProfile values must not be stored in AsyncStorage or any persisted user data, and settings storage persists only the flame id; the storage schema stays unchanged. (sources: specs/004-flame-visual-profiles/contracts/visual-profile-data.md#Contract: Visual Profile Data; specs/004-flame-visual-profiles/plan.md#Implementation Plan: Flame Visual Profiles; specs/004-flame-visual-profiles/spec.md#Functional Requirements; +1 more)
+- visualProfile must not change achievement, palette, embered, unlock rules, persisted selected-flame data, gallery eligibility, or fire strength math; it only affects rendered visuals. (sources: specs/004-flame-visual-profiles/data-model.md#Data Model: Flame Visual Profiles; specs/004-flame-visual-profiles/spec.md#Functional Requirements)
+- Profile strength response reads existing fire strength only and must not change the calculated fire strength value, unlock state, or stored settings; visual profiles may define their own strength response for size and non-size traits, and accent visibility may scale with strength without altering fire strength math. (sources: specs/004-flame-visual-profiles/data-model.md#Data Model: Flame Visual Profiles; specs/004-flame-visual-profiles/data-model.md#AccentProfile; specs/004-flame-visual-profiles/spec.md#Feature Specification: Flame Visual Profiles)
+- Fallback for a missing or malformed profile must not crash, produce blank flame states, or alter unlock, storage, or fire math. (sources: specs/004-flame-visual-profiles/contracts/renderer-profile-contract.md#Contract: Generic Flame Renderer)
 - Opacity and invert are rendered as visual effects and are never stored as user state. (sources: specs/004-flame-visual-profiles/data-model.md#AccentProfile)
-- A missing or malformed profile falls back without crashing, without producing blank flame states, and without altering unlock, storage, or fire math. (sources: specs/004-flame-visual-profiles/contracts/renderer-profile-contract.md#Contract: Generic Flame Renderer)
-- BonfireDesign/flame-profiles.js is the mandatory, authoritative source of truth for the 20-profile data map, and each profile must be traceable to its BonfireDesign source values. (sources: specs/004-flame-visual-profiles/contracts/visual-profile-data.md#Contract: Visual Profile Data; specs/004-flame-visual-profiles/plan.md#Implementation Plan: Flame Visual Profiles)
-- The 20 existing flame ids must map to their specified BonfireDesign identities. (sources: specs/004-flame-visual-profiles/contracts/visual-profile-data.md#Contract: Visual Profile Data)
-- The visual profile's activeStyle must be passed into Flame, while palette, dim, width, height, and lift continue to pass through unchanged. (sources: specs/004-flame-visual-profiles/tasks.md#Tests for User Story 1)
-- Visual profiles must not change unlock rules, persisted storage, gallery eligibility, or fire strength math; profile data only affects rendered visuals. (sources: specs/004-flame-visual-profiles/plan.md#Implementation Plan: Flame Visual Profiles; specs/004-flame-visual-profiles/spec.md#Functional Requirements)
+- BonfireDesign/flame-profiles.js is the mandatory, authoritative source of truth for the 20-profile data map; each profile must be traceable to its BonfireDesign source values, and the 20 existing flame ids must map to their specified BonfireDesign identities. (sources: specs/004-flame-visual-profiles/contracts/visual-profile-data.md#Contract: Visual Profile Data; specs/004-flame-visual-profiles/plan.md#Implementation Plan: Flame Visual Profiles)
+- Flame visual profiles are stored on each FlameStyle row in the existing flame catalog so identity, palette, rarity, and achievement remain a single source of truth. (sources: specs/004-flame-visual-profiles/plan.md#Implementation Plan: Flame Visual Profiles)
 - Current unlock logic, storage schema, gallery behavior, and fire strength math must be preserved unchanged. (sources: specs/004-flame-visual-profiles/plan.md#Implementation Plan: Flame Visual Profiles)
+- The visual profile's activeStyle must be passed into Flame while palette, dim, width, height, and lift continue to pass through unchanged. (sources: specs/004-flame-visual-profiles/tasks.md#Tests for User Story 1)
 - The notes store must be separate from the score store, and the month calendar must not derive markers or badges from the notes store. (sources: specs/005-tiny-daily-memory/data-model.md#Data Model: Tiny Daily Memory)
 - Storage holds at most one note per calendar day, keyed by day identifier with the note text as value. (sources: specs/005-tiny-daily-memory/contracts/day-note-storage.md#Contract: Day Note Storage)
-- The tiny daily memory feature must use only existing packages and stay small, typed, and dependency-free. (sources: specs/005-tiny-daily-memory/tasks.md#Tasks: Tiny Daily Memory)
-- Background atmosphere changes must not alter the fire's behavior or state; the fire remains stable. (sources: specs/006-subtle-atmosphere/data-model.md#Data Model: Subtle Atmosphere)
-- The atmosphere must remain compatible with the current bonfire palette and existing layered UI. (sources: specs/006-subtle-atmosphere/data-model.md#Data Model: Subtle Atmosphere)
+- The feature must use only existing packages and stay small, typed, and dependency-free. (sources: specs/005-tiny-daily-memory/tasks.md#Tasks: Tiny Daily Memory)
+- Background and atmosphere changes must not alter the fire's behavior or state, the atmosphere must remain compatible with the current bonfire palette and existing layered UI, and the fire and fixed panels keep their current visual role and are not restyled to match the atmosphere. (sources: specs/006-subtle-atmosphere/data-model.md#Data Model: Subtle Atmosphere; specs/006-subtle-atmosphere/spec.md#Assumptions)
 - No changes to fire math or calendar behavior are permitted as part of the atmosphere feature. (sources: specs/006-subtle-atmosphere/plan.md#Implementation Plan: Subtle Atmosphere)
-- The fire and fixed panels keep their current visual role and are not restyled to match the atmosphere. (sources: specs/006-subtle-atmosphere/spec.md#Assumptions)
-- The app must make no runtime network calls and must not add continuous JS timers for atmosphere.
-- Fire Health is derived only from existing score history and must never be stored separately; it is recomputed from score history each time. (sources: specs/007-fire-health/data-model.md#Data Model: Fire Health)
-- The health helper must be a pure, deterministic function of the score map and must not modify score history, fire strength, or unlock results. (sources: specs/007-fire-health/data-model.md#Data Model: Fire Health)
-- Fire Health must not change streak survival rules, fire strength math, score totals, unlock outcomes, stored settings, computeFire, computeMetrics, fireLabel, score-entry round-trips, or unlock outcomes. (sources: specs/007-fire-health/contracts/fire-health-behavior.md#Fire Health Behavior Contract; specs/007-fire-health/tasks.md#Tasks: Fire Health)
+- Fire Health is derived only from existing score history and is never stored separately; it is recomputed from score history via a pure, deterministic helper that does not modify score history, fire strength, or unlock results. (sources: specs/007-fire-health/data-model.md#Data Model: Fire Health)
+- Fire Health must not change streak survival rules, fire strength math, computeFire, computeMetrics, fireLabel, score totals, score-entry round-trips, unlock outcomes, or stored settings, and is visual-only, never influencing strength, streak, or unlock logic. (sources: specs/007-fire-health/contracts/fire-health-behavior.md#Fire Health Behavior Contract; specs/007-fire-health/tasks.md#Tasks: Fire Health)
 - The health state must always resolve to exactly one of the four canonical labels: Faint, Steady, Bright, Radiant. (sources: specs/007-fire-health/contracts/fire-health-behavior.md#Fire Health Behavior Contract)
 - The rendered health state must not appear as healthy flame behavior when the fire is unlit or out. (sources: specs/007-fire-health/contracts/fire-health-behavior.md#Fire Health Behavior Contract)
-- src/domain must stay pure, with no React, React Native, Skia, Reanimated, or AsyncStorage imports.
-- AsyncStorage access stays inside src/data and src/hooks, and components read state through hooks rather than touching storage directly.
-- Visual rendering (Skia, Reanimated) stays in src/components/Bonfire, and domain modules must not depend on it.
+- src/domain modules (fire, achievements, flames) must stay pure, with no React, React Native, Skia, AsyncStorage, or Reanimated imports, so they remain deterministically recomputable from stored scores.
+- AsyncStorage access stays behind the data layer (src/data/settingsStore.ts and the score store) and hooks, not inside Skia or presentational components.
+- Skia rendering stays in src/components/Bonfire, and calendar and settings UI must not import Skia drawing code.
+- The app is offline: no runtime network calls may be introduced into any src module.
+- No continuous JS timers are used: animation runs on Reanimated frame timing, and time-of-day atmosphere is computed from local time on demand.
 - Keep src/domain/fire.ts pure: no React imports, no AsyncStorage, no Date.now(); today must be passed in as an ISO local date key.
 - Only src/data/entriesStore.ts and src/data/settingsStore.ts may touch AsyncStorage; UI and hooks must go through them.
 - Hooks (useEntries, useSettings) own state and persistence; components must not write storage directly.
@@ -288,12 +292,13 @@
 - Seasonal tests must cover summer, winter, and north/south hemisphere inversion behavior. (sources: specs/006-subtle-atmosphere/tasks.md#Tasks: Subtle Atmosphere)
 - Screen readability tests must verify stable fire prominence and panel contrast across background states. (sources: specs/006-subtle-atmosphere/tasks.md#Tasks: Subtle Atmosphere)
 - Fire Health tests must cover the weighted score window, state thresholds, default fallback, suppression when unlit, and render wiring, using deterministic inputs without real time. (sources: specs/007-fire-health/plan.md#Implementation Plan: Fire Health; specs/007-fire-health/tasks.md#Tasks: Fire Health)
-- Regression coverage must prove gameplay behavior (fire math, metrics, entries store, achievements) is unchanged by Fire Health, using before/after replay of identical score histories that must produce identical fire and unlock outcomes. (sources: specs/007-fire-health/tasks.md#Tasks: Fire Health)
-- Before proposing any change, run the Jest suite under __tests__ with jest-expo, which covers BonfireScreen, CalendarSheet, achievements, fireMetrics, flameModel, and the flame catalog.
-- Verify fire rules with scenario tests: one missed day keeps the fire alive, two consecutive misses extinguish it, and any score from 1 to 5 relights it at the right strength.
-- Verify time-specific flames against the D through D+W window, and verify that backfilling after the window leaves the flame locked.
-- Verify that taps on locked flames are rejected and never persisted as the active flame.
-- Run TypeScript strict type checking, ESLint (eslint-config-expo), and Prettier on all touched files.
+- Regression coverage must prove gameplay behavior (fire math, metrics, entries store, achievements) is unchanged by Fire Health, with before/after replay of identical score histories producing identical fire and unlock outcomes. (sources: specs/007-fire-health/tasks.md#Tasks: Fire Health)
+- Run the Jest suite (jest-expo preset with react-test-renderer) after any change under src/domain, src/hooks, or src/components; the existing __tests__ files cover fireMetrics, achievements, flameModel, flames.catalog, BonfireScreen, and CalendarSheet.
+- Any change to strength, streak, or unlock logic must keep fireMetrics and achievements tests passing and add cases for: one missed day kept alive, two consecutive misses extinguishing, a 1 score relighting at 0, and today unscored not counting as a miss.
+- Time-flame tests must cover the D through D+W inclusive window, reset on re-completion without banking, and a backfilled completion whose window has elapsed staying locked.
+- Settings tests must cover v1 flameColor migration to v2 ids and fallback to amber for invalid or corrupt values.
+- Gesture and gallery changes must test that a gear tap alone does not open the calendar, a locked-flame tap is rejected without persisting, and calendar paging never moves into future months.
+- Keep jest.setup.js mocks for AsyncStorage, Skia, and Reanimated working; a new test must not require a device or network.
 - Run the Jest suite via jest-expo over __tests__ (BonfireScreen, CalendarSheet, achievements, fireMetrics, flameModel, flames.catalog) before any change is accepted.
 - Mock AsyncStorage for store tests; round-trip tests must assert deep equality of saved and loaded data.
 - Fire engine tests must follow the contract behavior table (empty, single score, consecutive, one-day gap, two-day miss) using a fixed today value.
@@ -307,6 +312,7 @@
 - `.expo/**`
 - `dist/**`
 - `web-build/**`
+- `coverage/**`
 - `ios/build/**`
 - `android/build/**`
 - `android/.gradle/**`
@@ -330,4 +336,4 @@
 - `npx tsc --noEmit`
 - `npx jest`
 
-<!-- gardener-generated: 00e234d495 02d76ab7f0 0640c9e891 06ab2e33b7 07c0eb6996 07d688c388 08375d98af 0871d2eda1 0886ef5c92 08a927baa7 096e6bb6fa 09ec728bf9 0ac81ef419 0b2af831f4 0cc022a5e2 0d1be31897 0d2431053a 0e08228e40 0e25865371 0e3152a156 0f999d4b36 104591593a 10830417d6 10b7abd426 142b35236c 1517ed850c 15a3bc4083 16c14a8617 197952965c 19c7d8e35c 1b858bdcbe 1ca4948f86 1db37d1429 1e2d2bc6b0 1fd3d2121f 20bbb8dec2 20db4583f0 21fbd7392a 2263c71283 241d1a9fed 248557775d 280570cdf7 28a821d4a4 2ad928df1a 2b690333b7 2ba6f388ea 2bf76e97ad 2d44a588f5 2db7ec39bf 2dd2b045d2 2e4ad4dd45 2ef0ef6aa2 2f61fb29dd 2fa9a13a02 2fc67566a8 3103a596f8 322b51512f 33a659e3a2 343695bd5b 35764fb610 3606c13827 36fc9a2574 37a3910a8f 37bd01d99f 385e40df43 3899011e6b 3a8a66db86 3b1dce7e60 3b40acb6f0 3cae25614e 3d3e0f5b8b 3e21f43e8a 3ee21cb574 3f0b540dd2 401dae0365 43b57c5a07 43d41cd54c 453a43192b 4642309120 46ddd209e3 47937463c3 4795d741cc 47debc5555 49035b5432 498cb00533 49a0887fc0 4a68bcb7c2 4cdeae94d6 4db8b701aa 539b1b67a0 53e0e65a55 5493ddc996 56040e0175 56749b343a 5c2e79ac56 5c97bb0b0d 5d57f90320 608eb20680 62535704d8 6261a7fdb8 62c44b13dc 6351727b42 6367388579 639d19e712 64627d63bc 65453edc90 66f22c123e 676a83f23e 6a1d31728e 6a400247b8 6d8ce13531 6da5129471 6e5f944044 70d4f5dd00 7487f92e7b 7514d37399 751c570eb4 75ede890db 77708074c8 7a8f9fbe1f 7d21217187 7f25cf5ffa 7f64a7c001 8115ebd406 8196472d59 8578b69add 85b7007f14 88352d84ef 8a1744a305 8af157dedc 8bf13de4fb 8df7de183c 8eaabceba6 9483c12ad9 94f4019493 95b9e9f9d9 9705aa1617 97ff80cd6f 99b3595529 9a0022d115 9a73bb7416 9e4ebf78da a0773a717c a0b7380b15 a117c37c7e a155136606 a1dcb985da a3b94847c9 a3de273289 a3e7699f16 a44e1a20e2 a4d84cb9d8 a529324838 a5e930faf7 a787dfab01 a7be2ce998 a946538eaa a9683f168d aa45c7de33 aaa49c6cee ab0e58c55d ac156238fc ac16de9761 ac622135ab ad3a0409be ada0721285 adbf332472 adf9d56c38 b0852c8431 b2f781b5a6 b3e92fbe24 b3f490b8ed b472a10ed9 b518b6fc1c b5449d1305 b5933df128 b6631e8d42 b9cc492c83 ba0a809a6e bc1cca1e06 bd8e6ac657 be3781cf25 c2150575ee c2376c2be0 c3085b8972 c3b9505c36 c3bc22cceb c4f603373c c58e8d0c58 c5fda13b41 c641488ebb c658ef68dc c70200cc83 c7532fca87 c89a502aa1 c8a8469b77 cabb44b06e cbb7d729b7 cf4cc8e1e1 cfd3c6eb3d d091347fef d1e65889b8 d1ec0eb77d d30ec800eb d45461aeb9 d5921f9262 d5ba65153c d813fbd66e da2d99d00f db283a945b db2b1da754 db88972477 dbcf5cded2 dc65bf4c82 dd330ae420 de8464e0e7 df2a05b4f6 dfd6f8456f dfdd026a56 e2f3b1161e e31fd69915 e4b4224574 e6ad24c8ac e70f670716 e71a0baf40 e7a43491a6 e7d4e421cd e9a5ef13fa eb722f734d ed743fd9e1 edbe9155b3 ef18db08e8 efee0829b4 effc8d88f6 f049b652d2 f0870aeb02 f28d36847b f2ec8df7c6 f630aa3f68 f751a461ed f8bc031b88 fb673b1cae fc5ce16be6 fd295045fe fea7238e7e fef04ae98c -->
+<!-- gardener-generated: 00e234d495 02d76ab7f0 03c8b76480 056690da93 0640c9e891 068f6d5199 06ab2e33b7 07b0080300 07c0eb6996 07d688c388 08375d98af 0871d2eda1 08a927baa7 0ac81ef419 0cc022a5e2 0d1be31897 0d2431053a 0da79d9e3d 0e08228e40 0e135a9428 0e3152a156 0f999d4b36 104591593a 10830417d6 10b7abd426 142b35236c 1517ed850c 151c719ec5 15ea887cba 16c14a8617 197952965c 19c7d8e35c 1b858bdcbe 1ca4948f86 1db37d1429 1e41b0d823 1fd3d2121f 20bbb8dec2 20db4583f0 21fbd7392a 2263c71283 241d1a9fed 280570cdf7 283d223976 2b690333b7 2ba6f388ea 2bf76e97ad 2d44a588f5 2dd2b045d2 2e4ad4dd45 2ef0ef6aa2 2f61fb29dd 2fa9a13a02 2fc67566a8 33a659e3a2 35764fb610 3606c13827 36fc9a2574 37a3910a8f 37bd01d99f 3899011e6b 3a6e43b703 3a8a66db86 3b1dce7e60 3b40acb6f0 3d3e0f5b8b 3ddfb6b24f 3e21f43e8a 3e4ec03c83 3ee21cb574 3f09e61808 401dae0365 43229d3c3c 43b57c5a07 43d41cd54c 453a43192b 46ddd209e3 47937463c3 4795d741cc 47debc5555 49035b5432 49a0887fc0 4a68bcb7c2 4cdeae94d6 5078aa471f 50c8d45150 52e2fa5df7 53127ee271 53e0e65a55 5493ddc996 56749b343a 58cd26bef3 5c2e79ac56 5c97bb0b0d 5d57f90320 607205b44b 623e2cbb17 62535704d8 6261a7fdb8 628cbf247b 62c44b13dc 6367388579 639d19e712 64627d63bc 647f18fa66 65453edc90 66f22c123e 676a83f23e 6a1d31728e 6a400247b8 6bf8203c09 6d3d2f92cf 6d8ce13531 6da5129471 71bd1bb246 720a6ada9c 7514d37399 751c570eb4 77708074c8 7a8f9fbe1f 7b654c3dec 7d21217187 7d40c2eddc 7f25cf5ffa 7f501b4ccc 80b81e1907 8115ebd406 8196472d59 83dafc4de7 8578b69add 88352d84ef 88b637d5c1 8a148dfc57 8a1744a305 8af157dedc 8b9d8c9b95 8bf13de4fb 8d0824ada6 8df7de183c 8eaabceba6 9483c12ad9 94f4019493 95b9e9f9d9 9705aa1617 99b3595529 9a0022d115 9a73bb7416 9b5a1dc19e 9c6f1b921d 9dd176637e 9e4ebf78da 9f1b57b523 9f2ae79724 a0773a717c a0b7380b15 a117c37c7e a155136606 a1dcb985da a3b94847c9 a3de273289 a4d84cb9d8 a5e930faf7 a787dfab01 a7be2ce998 a946538eaa aa45c7de33 aaa49c6cee ac16de9761 ac622135ab ad3a0409be ada0721285 adbf332472 adf9d56c38 b13e06c3e2 b18ce44fb3 b2f781b5a6 b3e92fbe24 b3f490b8ed b472a10ed9 b5449d1305 b5933df128 b9cc492c83 ba0a809a6e bab45b1792 bd8e6ac657 be3781cf25 c065a9cd23 c2150575ee c3085b8972 c3b9505c36 c3bc22cceb c47553ada3 c4f603373c c5fda13b41 c641488ebb c658ef68dc c70200cc83 c7532fca87 c89a502aa1 c8a8469b77 cabb44b06e cbb7d729b7 cc31af092a cdcf4f4230 cf4cc8e1e1 cfd3c6eb3d d091347fef d30ec800eb d36d711493 d45461aeb9 d5921f9262 d5ba65153c d813fbd66e da2d99d00f db10f720da db283a945b db2b1da754 db88972477 dc029083fc dc65bf4c82 de8464e0e7 df2a05b4f6 dfd6f8456f e0a286ca25 e2f3b1161e e31fd69915 e3f7bc1e93 e4b4224574 e71a0baf40 e7a43491a6 e7d4e421cd e9a5ef13fa eb722f734d ec9acb3b1b ed743fd9e1 edbe9155b3 ef18db08e8 ef9bb8215b efee0829b4 effc8d88f6 f049b652d2 f1ab7a7f36 f2102e64d4 f28d36847b f2ec8df7c6 f6870ef989 f751a461ed f8bc031b88 f8cce45c79 f962bf4e37 fc5ce16be6 fd295045fe fea7238e7e fef04ae98c -->
