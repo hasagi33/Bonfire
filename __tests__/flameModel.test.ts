@@ -1,3 +1,4 @@
+// Gardener QA: behaviour-preserving comment.
 /**
  * flameModel.test.ts — the pure strength→visual curve.
  *
