@@ -96,6 +96,7 @@ function accessibilityLabel(dateKey: string, kind: DayKind, score?: Score): stri
   return `${dateKey}, future`;
 }
 
+const KIND_CELL_STYLES = { future: styles.future, missed: styles.missed };
 const COL = `${100 / 7}%` as const;
 
 const styles = StyleSheet.create({
