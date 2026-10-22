@@ -59,6 +59,80 @@ function emptyMetrics(): RunMetrics {
   };
 }
 
+/** Mutable state threaded through the day-by-day walk. */
+interface WalkState {
+  alive: boolean;
+  strength: number;
+  consMiss: number;
+  chain: number;
+  prevScored: boolean;
+  runStart: DateKey | null;
+  runDays: number;
+  strongDays: number;
+  perfectDays: number;
+  scoreSum: number;
+}
+
+function initialWalkState(): WalkState {
+  return {
+    alive: false,
+    strength: 0,
+    consMiss: 0,
+    chain: 0,
+    prevScored: false,
+    runStart: null,
+    runDays: 0,
+    strongDays: 0,
+    perfectDays: 0,
+    scoreSum: 0,
+  };
+}
+
+/** Relight from a fresh spark: reset run accumulators and start a new run at `cur`. */
+function relight(state: WalkState, cur: DateKey): void {
+  state.alive = true;
+  state.strength = 0;
+  state.runStart = cur;
+  state.runDays = 0;
+  state.strongDays = 0;
+  state.perfectDays = 0;
+  state.scoreSum = 0;
+}
+
+/** Record a scored day into the chain and the current-run accumulators. */
+function accumulateScore(state: WalkState, score: Score): void {
+  state.strength += contribution(score);
+  state.consMiss = 0;
+  // Unbroken chain: extend if yesterday was scored, else start a new run of 1.
+  state.chain = state.prevScored ? state.chain + 1 : 1;
+  state.runDays += 1;
+  state.scoreSum += score;
+  if (score >= 4) state.strongDays += 1; // "strong" day
+  if (score === 5) state.perfectDays += 1; // "perfect" day
+  state.prevScored = true;
+}
+
+/** Record a past unscored day; two in a row extinguish a lit fire. */
+function recordPastMiss(state: WalkState): void {
+  state.consMiss += 1;
+  if (state.consMiss >= 2 && state.alive) {
+    state.alive = false;
+    state.strength = 0;
+  }
+  state.prevScored = false;
+}
+
+/** Snapshot the end-of-day state for the timeline. */
+function snapshotDay(state: WalkState, cur: DateKey, score: unknown): DayPoint {
+  return {
+    date: cur,
+    score: isScore(score) ? score : undefined,
+    alive: state.alive,
+    strength: state.strength,
+    consMiss: state.consMiss,
+  };
+}
+
 /**
  * Compute all run/history metrics from the calendar, evaluated against `today`.
  * Mirrors `computeFire`'s walk so the two never disagree about lit/out/strength.
@@ -75,88 +149,41 @@ export function computeMetrics(entries: Entries, today: DateKey): RunMetrics {
   }
 
   // ---- Walk state (mirrors computeFire) ----
-  let cur = keys[0];
-  let alive = false;
-  let strength = 0;
-  let consMiss = 0;
-
-  // Trailing run of consecutive scored days, and whether yesterday was scored.
-  let chain = 0;
-  let prevScored = false;
-
-  // Current-run accumulators — RESET on every relight (a fresh spark).
-  let runStart: DateKey | null = null;
-  let runDays = 0;
-  let strongDays = 0;
-  let perfectDays = 0;
-  let scoreSum = 0;
-
+  const state = initialWalkState();
   const timeline: DayPoint[] = [];
+  let cur = keys[0];
 
   while (cur <= today) {
     const score = entries[cur];
 
     if (isScore(score)) {
-      if (!alive) {
-        // Relight from a fresh spark.
-        alive = true;
-        strength = 0;
-        runStart = cur;
-        runDays = 0;
-        strongDays = 0;
-        perfectDays = 0;
-        scoreSum = 0;
-      }
-      strength += contribution(score);
-      consMiss = 0;
-
-      // Unbroken chain: extend if yesterday was scored, else start a new run of 1.
-      chain = prevScored ? chain + 1 : 1;
-
-      // Accumulate current-run stats.
-      runDays += 1;
-      scoreSum += score;
-      if (score >= 4) strongDays += 1; // "strong" day
-      if (score === 5) perfectDays += 1; // "perfect" day
-
-      prevScored = true;
+      if (!state.alive) relight(state, cur);
+      accumulateScore(state, score);
     } else if (isPast(cur, today)) {
-      // A past day with no score is a miss; two in a row extinguish the fire.
-      consMiss += 1;
-      if (consMiss >= 2 && alive) {
-        alive = false;
-        strength = 0;
-      }
-      prevScored = false;
+      recordPastMiss(state);
     } else {
       // `cur === today` and unscored: not a miss yet, just breaks the chain count.
-      prevScored = false;
+      state.prevScored = false;
     }
 
-    timeline.push({
-      date: cur,
-      score: isScore(score) ? score : undefined,
-      alive,
-      strength,
-      consMiss,
-    });
+    timeline.push(snapshotDay(state, cur, score));
     cur = addDays(cur, 1);
   }
 
   // If the fire is not lit at `today`, every run-scoped metric is zero/null;
   // history timeline is still returned for time-achievement scans.
-  if (!alive) {
+  if (!state.alive) {
     return { ...emptyMetrics(), timeline };
   }
 
   return {
-    runStart,
-    runDays,
-    runSpanDays: runStart ? diffDays(today, runStart) + 1 : 0,
-    unbrokenChain: chain,
-    strongDaysInRun: strongDays,
-    perfectDaysInRun: perfectDays,
-    scoreSumInRun: scoreSum,
+    runStart: state.runStart,
+    runDays: state.runDays,
+    runSpanDays: state.runStart ? diffDays(today, state.runStart) + 1 : 0,
+    unbrokenChain: state.chain,
+    strongDaysInRun: state.strongDays,
+    perfectDaysInRun: state.perfectDays,
+    scoreSumInRun: state.scoreSum,
     timeline,
   };
 }
