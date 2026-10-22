@@ -114,109 +114,155 @@ function summariseWeeks(timeline: DayPoint[], today: DateKey, minScore: number):
 // Condition evaluators — one per ConditionKind
 // ---------------------------------------------------------------------------
 
+type Evaluator = (
+  ach: Achievement,
+  m: RunMetrics,
+  fire: FireSnapshot,
+  today: DateKey,
+) => CondResult;
+
+/** Build a time-kind result from a completion day and best partial value. */
+function timeResult(day: DateKey | null, best: number, target: number): CondResult {
+  return {
+    complete: day !== null,
+    progress: { value: best, target },
+    completionDay: day ?? undefined,
+  };
+}
+
+// ---- streak evaluators (read the current run / strength) ----
+
+function evalRunDays(ach: Achievement, m: RunMetrics): CondResult {
+  const p = ach.params as { n: number };
+  return { complete: m.runDays >= p.n, progress: { value: m.runDays, target: p.n } };
+}
+
+function evalRunStrength(ach: Achievement, fire: FireSnapshot): CondResult {
+  const p = ach.params as { n: number };
+  return { complete: fire.strength >= p.n, progress: { value: fire.strength, target: p.n } };
+}
+
+function evalStrongDaysInRun(ach: Achievement, m: RunMetrics): CondResult {
+  const p = ach.params as { n: number };
+  return {
+    complete: m.strongDaysInRun >= p.n,
+    progress: { value: m.strongDaysInRun, target: p.n },
+  };
+}
+
+function evalRunStrengthAndDays(ach: Achievement, m: RunMetrics, fire: FireSnapshot): CondResult {
+  const p = ach.params as { s: number; n: number };
+  const complete = fire.strength >= p.s && m.runDays >= p.n;
+  // Show the sub-goal the user is further from (the lesser fraction).
+  const fracS = fire.strength / p.s;
+  const fracD = m.runDays / p.n;
+  const progress =
+    fracS <= fracD
+      ? { value: fire.strength, target: p.s }
+      : { value: m.runDays, target: p.n };
+  return { complete, progress };
+}
+
+// ---- time evaluators (scan the timeline for the latest completion) ----
+
+function evalConsecutivePerfect(ach: Achievement, m: RunMetrics): CondResult {
+  const p = ach.params as { n: number };
+  const { day, best } = latestChainEnd(m.timeline, p.n, dp => dp.score === 5);
+  return timeResult(day, best, p.n);
+}
+
+function evalUnbrokenChain(ach: Achievement, m: RunMetrics): CondResult {
+  const p = ach.params as { n: number };
+  const { day, best } = latestChainEnd(m.timeline, p.n, dp => dp.score !== undefined);
+  return timeResult(day, best, p.n);
+}
+
+function evalUnbrokenChainMinScore(ach: Achievement, m: RunMetrics): CondResult {
+  const p = ach.params as { n: number; min: number };
+  const { day, best } = latestChainEnd(
+    m.timeline,
+    p.n,
+    dp => dp.score !== undefined && dp.score >= p.min,
+  );
+  return timeResult(day, best, p.n);
+}
+
+function evalPerfectCalendarWeek(ach: Achievement, m: RunMetrics, today: DateKey): CondResult {
+  const p = ach.params as { minScore: number };
+  const weeks = summariseWeeks(m.timeline, today, p.minScore);
+  let day: DateKey | null = null;
+  let best = 0;
+  for (const w of weeks) {
+    if (w.daysMeeting > best) best = w.daysMeeting;
+    if (w.qualifies) day = w.sunday; // latest fully-scored week wins
+  }
+  return timeResult(day, best, 7);
+}
+
+function evalConsecutivePerfectWeeks(ach: Achievement, m: RunMetrics, today: DateKey): CondResult {
+  const p = ach.params as { weeks: number; minScore: number; minPerfect: number };
+  const weeks = summariseWeeks(m.timeline, today, p.minScore);
+  const recent: { sunday: DateKey; perfectDays: number }[] = [];
+  let day: DateKey | null = null;
+  let bestRun = 0;
+  for (const w of weeks) {
+    if (!w.qualifies) {
+      recent.length = 0; // a non-qualifying week breaks the streak of weeks
+      continue;
+    }
+    recent.push({ sunday: w.sunday, perfectDays: w.perfectDays });
+    if (recent.length > bestRun) bestRun = recent.length;
+    if (recent.length >= p.weeks) {
+      const window = recent.slice(recent.length - p.weeks);
+      const perfectSum = window.reduce((acc, x) => acc + x.perfectDays, 0);
+      if (perfectSum >= p.minPerfect) day = w.sunday;
+    }
+  }
+  return timeResult(day, bestRun, p.weeks);
+}
+
+function evalCrossStrength(ach: Achievement, m: RunMetrics): CondResult {
+  // Latest scored day where the live run is at/above n. This keeps threshold
+  // flames available while the user continues maintaining that strong run.
+  const p = ach.params as { n: number };
+  let day: DateKey | null = null;
+  let best = 0;
+  const t = m.timeline;
+  for (let i = 0; i < t.length; i++) {
+    if (t[i].strength > best) best = t[i].strength;
+    if (t[i].score !== undefined && t[i].alive && t[i].strength >= p.n) day = t[i].date;
+  }
+  return timeResult(day, best, p.n);
+}
+
+// Dispatch table: one evaluator per ConditionKind. A kind missing here falls
+// through to the fallback below, so it never silently unlocks a flame.
+const EVALUATORS: Partial<Record<Achievement['kind'], Evaluator>> = {
+  runDays: (a, m) => evalRunDays(a, m),
+  runStrength: (a, m, fire) => evalRunStrength(a, fire),
+  strongDaysInRun: (a, m) => evalStrongDaysInRun(a, m),
+  runStrengthAndDays: (a, m, fire) => evalRunStrengthAndDays(a, m, fire),
+  consecutivePerfect: (a, m) => evalConsecutivePerfect(a, m),
+  unbrokenChain: (a, m) => evalUnbrokenChain(a, m),
+  unbrokenChainMinScore: (a, m) => evalUnbrokenChainMinScore(a, m),
+  perfectCalendarWeek: (a, m, _fire, today) => evalPerfectCalendarWeek(a, m, today),
+  consecutivePerfectWeeks: (a, m, _fire, today) => evalConsecutivePerfectWeeks(a, m, today),
+  crossStrength: (a, m) => evalCrossStrength(a, m),
+};
+
 function evalCondition(
   ach: Achievement,
   m: RunMetrics,
   fire: FireSnapshot,
   today: DateKey,
 ): CondResult {
-  const p = ach.params;
-  switch (ach.kind) {
-    // ---- streak kinds (read the current run / strength) ----
-    case 'runDays':
-      return { complete: m.runDays >= p.n, progress: { value: m.runDays, target: p.n } };
-
-    case 'runStrength':
-      return { complete: fire.strength >= p.n, progress: { value: fire.strength, target: p.n } };
-
-    case 'strongDaysInRun':
-      return {
-        complete: m.strongDaysInRun >= p.n,
-        progress: { value: m.strongDaysInRun, target: p.n },
-      };
-
-    case 'runStrengthAndDays': {
-      const complete = fire.strength >= p.s && m.runDays >= p.n;
-      // Show the sub-goal the user is further from (the lesser fraction).
-      const fracS = fire.strength / p.s;
-      const fracD = m.runDays / p.n;
-      const progress =
-        fracS <= fracD
-          ? { value: fire.strength, target: p.s }
-          : { value: m.runDays, target: p.n };
-      return { complete, progress };
-    }
-
-    // ---- time kinds (scan the timeline for the latest completion) ----
-    case 'consecutivePerfect': {
-      const { day, best } = latestChainEnd(m.timeline, p.n, dp => dp.score === 5);
-      return { complete: day !== null, progress: { value: best, target: p.n }, completionDay: day ?? undefined };
-    }
-
-    case 'unbrokenChain': {
-      const { day, best } = latestChainEnd(m.timeline, p.n, dp => dp.score !== undefined);
-      return { complete: day !== null, progress: { value: best, target: p.n }, completionDay: day ?? undefined };
-    }
-
-    case 'unbrokenChainMinScore': {
-      const { day, best } = latestChainEnd(
-        m.timeline,
-        p.n,
-        dp => dp.score !== undefined && dp.score >= p.min,
-      );
-      return { complete: day !== null, progress: { value: best, target: p.n }, completionDay: day ?? undefined };
-    }
-
-    case 'perfectCalendarWeek': {
-      const weeks = summariseWeeks(m.timeline, today, p.minScore);
-      let day: DateKey | null = null;
-      let best = 0;
-      for (const w of weeks) {
-        if (w.daysMeeting > best) best = w.daysMeeting;
-        if (w.qualifies) day = w.sunday; // latest fully-scored week wins
-      }
-      return { complete: day !== null, progress: { value: best, target: 7 }, completionDay: day ?? undefined };
-    }
-
-    case 'consecutivePerfectWeeks': {
-      const weeks = summariseWeeks(m.timeline, today, p.minScore);
-      const recent: { sunday: DateKey; perfectDays: number }[] = [];
-      let day: DateKey | null = null;
-      let bestRun = 0;
-      for (const w of weeks) {
-        if (w.qualifies) {
-          recent.push({ sunday: w.sunday, perfectDays: w.perfectDays });
-          if (recent.length > bestRun) bestRun = recent.length;
-          if (recent.length >= p.weeks) {
-            const window = recent.slice(recent.length - p.weeks);
-            const perfectSum = window.reduce((acc, x) => acc + x.perfectDays, 0);
-            if (perfectSum >= p.minPerfect) day = w.sunday;
-          }
-        } else {
-          recent.length = 0; // a non-qualifying week breaks the streak of weeks
-        }
-      }
-      return { complete: day !== null, progress: { value: bestRun, target: p.weeks }, completionDay: day ?? undefined };
-    }
-
-    case 'crossStrength': {
-      // Latest scored day where the live run is at/above n. This keeps threshold
-      // flames available while the user continues maintaining that strong run.
-      let day: DateKey | null = null;
-      let best = 0;
-      const t = m.timeline;
-      for (let i = 0; i < t.length; i++) {
-        if (t[i].strength > best) best = t[i].strength;
-        if (t[i].score !== undefined && t[i].alive && t[i].strength >= p.n) day = t[i].date;
-      }
-      return { complete: day !== null, progress: { value: best, target: p.n }, completionDay: day ?? undefined };
-    }
-
-    default:
-      // Exhaustiveness guard: a new kind without an evaluator never silently
-      // unlocks a flame.
-      return { complete: false, progress: { value: 0, target: 1 } };
+  const evaluator = EVALUATORS[ach.kind];
+  if (!evaluator) {
+    // Exhaustiveness guard: a new kind without an evaluator never silently
+    // unlocks a flame.
+    return { complete: false, progress: { value: 0, target: 1 } };
   }
+  return evaluator(ach, m, fire, today);
 }
 
 // ---------------------------------------------------------------------------
