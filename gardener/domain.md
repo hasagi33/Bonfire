@@ -4,43 +4,39 @@
 ## Domain
 
 - Gardener should keep changes within this project's domain. Flag work that introduces features outside it.
-- In-domain: `mobile app (Expo / React Native)`.
-- In-domain: `personal productivity tracking`.
-- In-domain: `gamification and achievements`.
-- In-domain: `animated 2D/GPU graphics and visual effects`.
-- In-domain: `local-first on-device data persistence`.
-- In-domain: `calendar and date-based history`.
-- In-domain: `gesture-driven UI`.
-- In-domain: `settings and preferences`.
-- Capability: Log one integer productivity score from 1 to 5 per day, for today or any past date, with one entry per date.
-- Capability: Add, change, or clear the score for any past or current day; future dates cannot be scored.
-- Capability: Compute fire strength as the cumulative sum of per-day contributions (1 adds 0, 2 adds 1, 3 adds 2, 4 adds 3, 5 adds 4) over the current alive run.
-- Capability: Keep the fire alive across a single missed past day; two consecutive missed past days extinguish it, with today being unscored not counted as a miss.
+- In-domain: `mobile productivity tracking`.
+- In-domain: `habit and streak tracking via gamification`.
+- In-domain: `local-first data persistence`.
+- In-domain: `2D/GPU animated visualization (flame rendering)`.
+- In-domain: `calendar-based daily logging`.
+- In-domain: `achievement and unlock systems`.
+- In-domain: `user settings and personalization`.
+- Capability: Record one integer productivity score from 1 to 5 per day, for today or any past date, with one entry per date.
+- Capability: Change or clear a previously assigned score for any past or current day; future dates cannot be scored.
+- Capability: Convert scores into cumulative fire strength (1→+0, 2→+1, 3→+2, 4→+3, 5→+4) over the current alive run.
+- Capability: Extinguish the fire after two consecutive missed past days; a single missed day is tolerated; an unscored today is not a miss.
 - Capability: Fully reset strength to zero when the fire goes out, and relight it from zero on any new score (a 1 relights as a minimal lit flame at strength 0).
-- Capability: Recompute fire state deterministically from stored history so edits and backfills always yield the same result.
-- Capability: Render a GPU-drawn animated flame (React Native Skia) and animate it with Reanimated, where on-screen size soft-caps while underlying strength keeps growing.
-- Capability: Emit rising particles from the lit flame, with intensity that may scale with strength.
-- Capability: Display visual-only Fire Health tiers (Faint, Steady, Bright, Radiant) derived from recent score quality.
+- Capability: Soft-cap the on-screen flame size while the underlying strength keeps increasing without limit.
+- Capability: Render an animated bonfire flame with React Native Skia and Reanimated, including rising particles whose intensity may scale with strength.
+- Capability: Show visual-only Fire Health tiers (Faint, Steady, Bright, Radiant) derived from recent score quality.
 - Capability: Adapt scene atmosphere from local time without continuous JS timers.
-- Capability: Show a flame-only main screen with a settings button in the top-right corner.
-- Capability: Reveal a month-focused calendar sheet via full-screen swipe up and hide it via swipe down, using React Native Gesture Handler and Reanimated sheet animation.
-- Capability: Calendar shows which days have scores and their intensity, which days were missed, and can page back through any number of past months but not into future months.
-- Capability: Support short per-day notes that do not affect score or fire logic.
-- Capability: Persist all scores, notes, and selected flame locally via AsyncStorage, retained indefinitely with no automatic purge.
-- Capability: Load saved entries on cold start behind a brief loading placeholder; loading never throws, and corrupt or missing data falls back to an empty map or default settings.
-- Capability: Offer flame colors Amber (default), Crimson, and Sapphire, persisted across restarts and applied to the flame immediately.
-- Capability: Migrate the settings schema from v1 flameColor to v2 flameStyle, preserving existing color choices.
-- Capability: Catalog of exactly 20 flame styles (1 base, 8 streak-achievement, 11 time-achievement) with kinds, parameters, and unlock windows, each tied to one achievement; Amber is always unlocked.
-- Capability: Classify achievements as streak-specific (active only while the current run meets the condition) or time-specific (a window of days from the most recent completion day, gated on the fire being lit).
-- Capability: Recompute achievement unlock states from the calendar on every edit, including relocking streak flames when a score is cleared, and keep time flames unlocked only within their window.
-- Capability: Show a locked equipped flame as a dim, desaturated embered variant; Amber never renders embered; out-state visuals take precedence when the fire is out.
-- Capability: Flame gallery reached from settings listing every flame with name, colors, requirement, unlock status, and live progress or days remaining, grouped by tier, with accessibility roles and states.
-- Capability: Users may equip any flame, including locked ones, which auto-bursts to full color once earned; the active selection persists across restarts.
-- Capability: Tapping a locked gallery row gives a brief rejection cue and leaves the active flame unchanged, with no dialog.
-- Capability: Give brief in-app feedback when a flame newly unlocks.
-- Capability: Achievement rules reward stronger scores, higher cumulative strength, and longer continuity, and never reward low averages, low scores, or breaking streaks.
-- Capability: Re-earning is possible indefinitely; no flame is consumed permanently.
-- Capability: Automated tests (under __tests__) covering domain rules, store behavior, and UI interactions.
+- Capability: Flame-only main screen with a top-right settings button and a hidden calendar.
+- Capability: Reveal the calendar with a full-screen swipe-up gesture from the closed main view and hide it with swipe-down (Gesture Handler and Reanimated sheet).
+- Capability: Month-focused calendar that pages backward through any number of past months but not into future months, showing scored days, intensity, and missed days.
+- Capability: Edit any past day's score from the calendar, with the fire and unlock states recomputed.
+- Capability: Attach short per-day notes that do not affect score or fire logic.
+- Capability: Persist scores, notes, settings, and the selected flame locally via AsyncStorage; retain all past entries indefinitely with no automatic purge.
+- Capability: Load saved entries on cold start behind a brief loading placeholder; loading never throws, and corrupt data falls back to empty entries or default settings.
+- Capability: Choose a flame color (Amber default, Crimson, Sapphire) from settings that persists across restarts and recolors the flame immediately.
+- Capability: Maintain a catalog of 20 flame styles (1 base, 8 streak, 11 time) with each style tied to one achievement; Amber is always unlocked.
+- Capability: Unlock streak-specific flames while the current alive run satisfies their condition, relocking when the fire goes out or an edit breaks the condition.
+- Capability: Unlock time-specific flames for a window of days from the most recent completion day, gated on the fire being lit; backfilled days whose window has elapsed stay locked.
+- Capability: Recompute all unlock states deterministically and order-independently from calendar history rather than persisting unlock state.
+- Capability: Equip any flame, including locked ones; locked equipped flames render as a dim, desaturated embered variant, and they burst to full color when earned.
+- Capability: Show a flame gallery from settings listing every flame with colors, requirement, unlock status, live progress, and days remaining for time flames.
+- Capability: Give brief in-app feedback when a flame newly unlocks and a brief rejection cue when tapping a locked flame (no dialogs or push notifications).
+- Capability: Migrate settings from v1 flameColor to v2 flameStyle, preserving existing color choices and never throwing on corrupt data.
+- Capability: Keep achievement conditions positive: reward stronger scores, cumulative strength, and longer continuity, never low averages or intentionally low scores.
 - Scope source of truth: `specs/001-bonfire-productivity-tracker/checklists/requirements.md`.
 - Scope source of truth: `specs/001-bonfire-productivity-tracker/contracts/entries-store.md`.
 - Scope source of truth: `specs/001-bonfire-productivity-tracker/contracts/fire-engine.md`.
@@ -60,7 +56,6 @@
 - Capability: Render an animated flame with React Native Skia, scaled by a soft-capped intensity model that asymptotes toward 1.
 - Capability: Render visual-only Fire Health tiers (Faint, Steady, Bright, Radiant) from recent score quality.
 - Capability: Show a swipe-up calendar sheet (React Native Gesture Handler and Reanimated) for logging, editing, clearing, and reviewing scores.
-- Capability: Attach short per-day notes that do not affect score or fire logic.
 - Capability: Unlock collectible flame styles/palettes from streak and time-based achievements.
 - Capability: Apply a calendar heat color ramp indexed by score, using design theme tokens.
 - Capability: Let the user choose a flame color, with an enum-validated setting that falls back to Amber on invalid input.
@@ -69,18 +64,20 @@
 
 ## Out-of-Domain Examples
 
-- Push or local notifications and reminders
-- Cloud sync, user accounts, login, or multi-device sharing
-- Social features, leaderboards, friends, or sharing scores publicly
-- Task or to-do list management, project tracking, or pomodoro timers
-- Classic streak counters, charts, or analytics dashboards as the primary view
-- Server-side APIs, backends, or remote databases for storing entries
-- Payments, in-app purchases, or premium flame sales
-- Health data integration (e.g. HealthKit, step counts) or wearable sensors
-- Calendar integration with external calendars (Google Calendar, iCal sync)
-- Web-only admin dashboards or desktop-specific UI
-- Ratings or reviews of other users' productivity
-- Monetized or randomized loot boxes for flames
+- Task or to-do list management
+- Pomodoro or focus timers and stopwatches
+- Push notifications or reminder alerts
+- Cloud sync, user accounts, or multi-device sign-in
+- Social features such as sharing, friends, leaderboards, or feeds
+- Financial, expense, or budgeting tracking
+- Analytics dashboards with charts and graphs as the primary view
+- Multi-user team collaboration or shared bonfires
+- Rewarding low scores, lowered scores, or deliberately breaking streaks
+- Server-side backend, REST APIs, or remote databases for scores
+- Web-only dashboards or desktop-specific UI
+- Payments, in-app purchases, or ad monetization of flame styles
+- Health tracking beyond the visual-only Fire Health tier (e.g., medical or fitness metrics)
+- Automatic purging or expiry of historical entries
 - Server-side accounts, authentication, or cloud sync of scores
 - Multi-user sharing, social feeds, or leaderboards
 - Task lists, to-do items, or project management
@@ -92,4 +89,4 @@
 - Backend REST/GraphQL APIs for data storage
 - Time tracking or Pomodoro timers
 
-<!-- gardener-generated: 06d2ea1e58 145cce365e 18fbf40d70 1dfb152451 2172730188 25c88f0de5 329b558269 33c6ec6bea 3aef011bdd 3f575ed1c7 469c7a6422 4dbd4b429a 553be0a030 56d0b09bf1 574e7ecce0 57e324edd8 68b2f57dc3 6e2902f239 70046328e8 70a595d13a 75a49f77f7 76285d5822 7bf443baa7 7f29283ec2 812a90cc2f 8a3093907a 9379a169ca 9926a72c14 9d5b4da6d6 9df2e33487 a4d7b5d670 ad99f7c596 b167a16cbc b2d601cd92 be7178a4e5 cde85f59ee d14644db99 d31899b6e2 de660d76e1 e01bff1168 e085be35eb e32a11aeff e40e4275f8 e442ce5d0e e4cef79acc e5c5ec2e21 e7a9535e4f edaa672c3c f378e3b747 f4b39d4374 -->
+<!-- gardener-generated: 05961333c0 0dfd2e0053 1d1270ef6a 1eb7432f61 1f40b78546 20b242cb4a 261a271eb9 2f49cf7181 36b3d974b1 38e3fbb4d6 3a86a2b8e1 3e276396b1 3ebe6799ca 4529ebbe47 469c7a6422 4c48566ca5 501636585a 574e7ecce0 58731477df 59d7deed03 5a7732fea8 62f213ecdc 66c962c602 6ecbb2b805 6f4ea30dfa 76952803fc 7a3cdf50c2 7c8b0d5bcf 824c1cb2ff 87496c390c 87e404d98f 8a3093907a 8a37882791 a5fdd3b027 b26cb2b8d8 b9ce0510a8 bfc60febff c501434dae c6b38a2c24 ced1c1dc58 d0dee21c7c d286153d38 d7f1599c52 db87edae68 de17ebb7bc e513ebeb60 efb47f513a f3d4e3ff2c -->
