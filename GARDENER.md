@@ -5,7 +5,7 @@
 ## Product Purpose
 
 - Maintained repository: `hasagi33/Bonfire`.
-- Bonfire is a local-first, offline Expo React Native productivity tracker in which users log a 1–5 daily productivity score per day and watch an animated Skia bonfire whose strength reflects accumulated scores. Achievements unlock collectible flame styles, and a calendar sheet lets users review, backfill, or clear past scores. (auto-detected, confidence 90%; verify)
+- Bonfire is a local-first Expo React Native productivity tracker that turns daily effort into a living bonfire. Users log a 1-5 score per day, the fire's strength and survival are derived deterministically from that score history, and collectible flame styles unlock through streak and time-based achievements. (auto-detected, confidence 88%; verify)
 - Review and edit this draft before merging; merging makes these rules source truth.
 - Bonfire is a local-first Expo React Native productivity tracker that turns a daily 1-5 productivity score into a living, Skia-rendered bonfire whose strength is derived deterministically from the score history. Users also review and annotate past days through a calendar sheet and unlock flame styles through achievements. (auto-detected, confidence 85%; verify)
 
@@ -28,4 +28,4 @@ Each scope has its own rules. Before changing a file, read the scope file of eve
 - `gardener/scopes/006-subtle-atmosphere.md`: 006-subtle-atmosphere (12 files, 12 requirements).
 - `gardener/scopes/007-fire-health.md`: 007-fire-health (15 files, 8 requirements).
 
-<!-- gardener-generated: 00640e9c4c 05b0ac79b6 1cb0036fd9 1d6f6a7e20 4b2b7a1209 642ac37bbb 75f156f3db 83f42744ad 924cd1ef93 9291e7383a bd1f67dbb2 ec20c31cca -->
+<!-- gardener-generated: 00640e9c4c 05b0ac79b6 1cb0036fd9 1d6f6a7e20 4b2b7a1209 642ac37bbb 75f156f3db 83f42744ad 924cd1ef93 bd1f67dbb2 c1f27c8d28 ec20c31cca -->
