@@ -20,6 +20,7 @@ import type { FireState } from '../src/domain/fire';
 import {
   flameById,
   DEFAULT_VISUAL_PROFILE,
+  FLAMES,
   type VisualProfile,
 } from '../src/domain/flames';
 
@@ -84,6 +85,50 @@ describe('flameVisual', () => {
 // ===========================================================================
 
 const profileOf = (id: string): VisualProfile => flameById(id).visualProfile!;
+
+describe('FLAMES catalog invariants', () => {
+  test('exactly one base-tier flame exists and it has no achievement', () => {
+    const base = FLAMES.filter(f => f.tier === 'base');
+    expect(base).toHaveLength(1);
+    expect(base[0].achievement).toBeNull();
+  });
+
+  test('every streak/time flame has an achievement; windowDays present iff type === time', () => {
+    for (const f of FLAMES) {
+      if (f.tier === 'base') continue;
+      expect(f.achievement).not.toBeNull();
+      const a = f.achievement!;
+      if (a.type === 'time') {
+        expect(typeof a.windowDays).toBe('number');
+      } else {
+        expect(a.windowDays).toBeUndefined();
+      }
+    }
+  });
+
+  test('palette and embered variants are derived consistently for every flame', () => {
+    for (const f of FLAMES) {
+      expect(f.palette).toBeDefined();
+      expect(f.embered).toBeDefined();
+      expect(f.gradient.length).toBeGreaterThan(0);
+      expect(f.embered).not.toEqual(f.palette);
+    }
+  });
+
+  test('every flame carries a visualProfile with the required top-level fields', () => {
+    for (const f of FLAMES) {
+      const p = f.visualProfile;
+      expect(p).toBeDefined();
+      expect(p!.shape).toBeDefined();
+      expect(p!.motion).toBeDefined();
+      expect(Array.isArray(p!.particles)).toBe(true);
+      expect(p!.aura).toBeDefined();
+      expect(Array.isArray(p!.accents)).toBe(true);
+      expect(p!.paletteIntent).toBeDefined();
+      expect(p!.designRef).toBeDefined();
+    }
+  });
+});
 
 describe('resolveVisualProfile / fallback (US1)', () => {
   test('returns the style profile when present', () => {
