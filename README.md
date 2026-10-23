@@ -288,3 +288,14 @@ npm run lint
 
 The tests cover pure fire rules, metrics, achievements, Fire Health, storage
 cleaning, hooks, and key component wiring.
+
+<!-- gardener-maintenance-note:start 7f1a1274-b999-413a-b9e8-636e645352f1 -->
+## Gardener maintenance note
+
+Gardener opened this maintenance PR from plan `7f1a1274-b999-413a-b9e8-636e645352f1`.
+
+- Goal: Manual maintenance run.
+- Evidence: Manual trigger payload.
+- Entropy impact: Manual verification.
+- Verification: Review; do not merge without human approval.
+<!-- gardener-maintenance-note:end 7f1a1274-b999-413a-b9e8-636e645352f1 -->
