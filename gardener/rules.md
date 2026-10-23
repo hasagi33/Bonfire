@@ -24,6 +24,8 @@
 - `src/data/**/v1 storage key literal` because The versioned AsyncStorage key is the migration anchor for saved scores; renaming it without a migration loses user data.
 - `**/.env*` because secrets must never be modified by Gardener.
 - `**/secrets/**` because secret material requires human handling.
+- `src/hooks/useFlames.ts` because the flame unlock hook is hand-tuned by the maintainers and must only change by hand.
+- `src/components/Bonfire/FireCaption.tsx` because the caption copy and layout are owned by design.
 
 ## Autonomous Fixes Allowed
 
