@@ -18,7 +18,6 @@
 
 ## Never-Touch Paths
 
-- `specs/**` because Product specs and contracts are the authoritative statement of scope and fix policy and are maintained by humans.
 - `.agents/skills/**` because Agent skill files define project workflow instructions and are not application code.
 - `.claude/skills/**` because Agent skill files define project workflow instructions and must stay in sync with the spec kit tooling.
 - `src/data/**/v1 storage key literal` because The versioned AsyncStorage key is the migration anchor for saved scores; renaming it without a migration loses user data.
