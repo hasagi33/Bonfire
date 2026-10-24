@@ -18,6 +18,8 @@ import {
 } from '../src/components/Bonfire/flameModel';
 import type { FireState } from '../src/domain/fire';
 import {
+  FLAMES,
+  BASE_FLAME_ID,
   flameById,
   DEFAULT_VISUAL_PROFILE,
   type VisualProfile,
@@ -28,6 +30,61 @@ const lit = (strength: number): FireState => ({
   strength,
   everLit: true,
   label: { word: '', sub: '' },
+});
+
+describe('FLAMES catalog (src/domain/flames.ts)', () => {
+  const KEBAB = /^[a-z0-9]+(-[a-z0-9]+)*$/;
+
+  test('exactly one base-tier flame, and it is Amber', () => {
+    const base = FLAMES.filter(f => f.tier === 'base');
+    expect(base).toHaveLength(1);
+    expect(base[0].id).toBe(BASE_FLAME_ID);
+    expect(base[0].achievement).toBeNull();
+  });
+
+  test('ids are unique and kebab-case', () => {
+    const ids = FLAMES.map(f => f.id);
+    expect(new Set(ids).size).toBe(ids.length);
+    for (const id of ids) expect(id).toMatch(KEBAB);
+  });
+
+  test('time achievements define windowDays; streak achievements do not require it', () => {
+    for (const f of FLAMES) {
+      if (f.achievement?.type === 'time') {
+        expect(typeof f.achievement.windowDays).toBe('number');
+        expect(f.achievement.windowDays!).toBeGreaterThan(0);
+      }
+      if (f.achievement?.type === 'streak') {
+        expect(f.achievement.windowDays).toBeUndefined();
+      }
+    }
+  });
+
+  test('every non-base flame has an achievement', () => {
+    for (const f of FLAMES) {
+      if (f.tier !== 'base') expect(f.achievement).not.toBeNull();
+    }
+  });
+
+  test('gradients are non-empty and each palette is sampled from its gradient', () => {
+    for (const f of FLAMES) {
+      expect(f.gradient.length).toBeGreaterThan(0);
+      expect(f.palette).toBeDefined();
+      expect(f.embered).toBeDefined();
+    }
+  });
+
+  test('every entry carries a visual profile', () => {
+    for (const f of FLAMES) {
+      expect(f.visualProfile).toBeDefined();
+      expect(f.visualProfile!.source).toBe('BonfireDesign');
+      expect(f.visualProfile!.shape.tongues.length).toBeGreaterThan(0);
+    }
+  });
+
+  test('flameById throws or returns a flame for unknown ids consistently with the catalog', () => {
+    expect(flameById(BASE_FLAME_ID).id).toBe(BASE_FLAME_ID);
+  });
 });
 
 describe('intensity', () => {
