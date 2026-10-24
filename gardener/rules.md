@@ -86,5 +86,6 @@
 
 ## Verification Commands
 
-- `npx tsc --noEmit`
-- `npx jest`
+- `npx jest --watch false`
+- `npm --prefix web run test`
+- `npm --prefix web run dev`
