@@ -24,6 +24,7 @@
 - `src/data/**/v1 storage key literal` because The versioned AsyncStorage key is the migration anchor for saved scores; renaming it without a migration loses user data.
 - `**/.env*` because secrets must never be modified by Gardener.
 - `**/secrets/**` because secret material requires human handling.
+- `legal/qa-cod120-counsel/**` because outside counsel owns these contract drafts; they must stay byte-identical.
 
 ## Autonomous Fixes Allowed
 
