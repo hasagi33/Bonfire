@@ -22,6 +22,8 @@ import {
   DEFAULT_VISUAL_PROFILE,
   type VisualProfile,
 } from '../src/domain/flames';
+import { FLAMES } from '../src/domain/flames';
+import { paletteFromGradient, emberedPalette } from '../src/theme/palettes';
 
 const lit = (strength: number): FireState => ({
   state: 'lit',
@@ -48,6 +50,62 @@ describe('intensity', () => {
 
   test('clamps negative strength to 0', () => {
     expect(intensity(-5)).toBe(0);
+  });
+});
+
+describe('flames catalog (src/domain/flames.ts)', () => {
+  test('flameById returns the matching catalog entry', () => {
+    const amber = flameById('amber');
+    expect(amber.id).toBe('amber');
+    expect(amber.tier).toBe('base');
+    expect(amber.achievement).toBeNull();
+  });
+
+  test('flameById falls back to the base flame for unknown ids', () => {
+    expect(flameById('does-not-exist').id).toBe('amber');
+  });
+
+  test('every catalog id is unique', () => {
+    const ids = FLAMES.map(f => f.id);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  test('exactly one base flame exists and it is always unlocked (no achievement)', () => {
+    const bases = FLAMES.filter(f => f.tier === 'base');
+    expect(bases).toHaveLength(1);
+    expect(bases[0].achievement).toBeNull();
+  });
+
+  test('non-base flames each carry an achievement matching their tier', () => {
+    for (const f of FLAMES) {
+      if (f.tier === 'base') continue;
+      expect(f.achievement).not.toBeNull();
+      expect(f.achievement!.type).toBe(f.tier);
+      if (f.achievement!.type === 'time') {
+        expect(typeof f.achievement!.windowDays).toBe('number');
+      }
+    }
+  });
+
+  test('rarity strictly increases base < streak < time for every flame pair across tiers', () => {
+    const rank = { base: 0, streak: 1, time: 2 } as const;
+    const sorted = [...FLAMES].sort((a, b) => a.rarity - b.rarity);
+    for (let i = 1; i < sorted.length; i++) {
+      expect(rank[sorted[i].tier]).toBeGreaterThanOrEqual(rank[sorted[i - 1].tier]);
+    }
+  });
+
+  test('palette and embered variants are derived from the gradient', () => {
+    for (const f of FLAMES) {
+      expect(f.palette).toEqual(paletteFromGradient(f.gradient));
+      expect(f.embered).toEqual(emberedPalette(f.palette));
+    }
+  });
+
+  test('every gradient has at least two stops', () => {
+    for (const f of FLAMES) {
+      expect(f.gradient.length).toBeGreaterThanOrEqual(2);
+    }
   });
 });
 
