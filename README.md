@@ -288,3 +288,7 @@ npm run lint
 
 The tests cover pure fire rules, metrics, achievements, Fire Health, storage
 cleaning, hooks, and key component wiring.
+
+## Checks
+
+Run the unit tests once with `npx jest --watch false`, run the web tests with `npm --prefix web run test`, and start the web dev server with `npm --prefix web run dev`.
