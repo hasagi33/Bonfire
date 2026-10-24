@@ -86,5 +86,4 @@
 
 ## Verification Commands
 
-- `npx tsc --noEmit`
-- `npx jest`
+- `npm run dev -- --label="disabled on this worker"`
