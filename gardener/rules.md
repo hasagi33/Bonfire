@@ -87,4 +87,4 @@
 ## Verification Commands
 
 - `npx tsc --noEmit`
-- `npx jest`
+- `cd tools && npm run dev`
