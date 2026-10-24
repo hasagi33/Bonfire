@@ -86,5 +86,5 @@
 
 ## Verification Commands
 
+- `npx jest --watch`
 - `npx tsc --noEmit`
-- `npx jest`
