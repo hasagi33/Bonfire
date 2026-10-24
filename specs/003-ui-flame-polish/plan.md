@@ -121,3 +121,7 @@ edits existing files plus one new test file; no structural change.
 ## Complexity Tracking
 
 *No constitution violations — table intentionally empty.*
+
+## Maintenance Policy
+
+- Documentation upkeep is low risk: the maintenance bot may fix typos, spelling and broken links in `docs/handbook/getting-started.md` on its own, without review.
