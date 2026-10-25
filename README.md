@@ -280,6 +280,12 @@ Run the full test suite:
 npm test
 ```
 
+Run the web package tests:
+
+```sh
+npm --prefix web run test
+```
+
 Run lint:
 
 ```sh

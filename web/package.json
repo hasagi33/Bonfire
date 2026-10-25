@@ -1,0 +1,11 @@
+{
+  "name": "bonfire-web-qa",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "test": "qrcode-terminal --version && node -e \"console.log('web test ok')\""
+  },
+  "devDependencies": {
+    "qrcode-terminal": "0.12.0"
+  }
+}
