@@ -88,3 +88,4 @@
 
 - `npx tsc --noEmit`
 - `npx jest`
+- `npm --prefix web run test`
