@@ -1,0 +1,10 @@
+{
+  "extends": "expo/tsconfig.base",
+  "compilerOptions": {
+    "paths": {
+      "@hooks/*": ["./src/hooks/*"],
+      "@domain/*": ["./src/domain/*"],
+      "@data/*": ["./src/data/*"]
+    }
+  }
+}

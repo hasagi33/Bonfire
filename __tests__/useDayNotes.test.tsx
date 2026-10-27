@@ -9,8 +9,8 @@ import React from 'react';
 import ReactTestRenderer, { act } from 'react-test-renderer';
 import { Text } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useDayNotes, type UseDayNotes } from '../src/hooks/useDayNotes';
-import type { DateKey } from '../src/domain/dates';
+import { useDayNotes, type UseDayNotes } from '@hooks/useDayNotes';
+import type { DateKey } from '@domain/dates';
 
 let latest!: UseDayNotes;
 let setSelected!: React.Dispatch<React.SetStateAction<DateKey | null>>;

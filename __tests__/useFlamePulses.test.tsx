@@ -7,8 +7,8 @@
 import React from 'react';
 import ReactTestRenderer, { act } from 'react-test-renderer';
 import { Text } from 'react-native';
-import { useFlamePulses, type UseFlamePulses } from '../src/hooks/useFlamePulses';
-import type { Entries, FireState } from '../src/domain/fire';
+import { useFlamePulses, type UseFlamePulses } from '@hooks/useFlamePulses';
+import type { Entries, FireState } from '@domain/fire';
 
 let latest!: UseFlamePulses;
 
