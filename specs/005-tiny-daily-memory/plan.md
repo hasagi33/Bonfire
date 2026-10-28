@@ -127,3 +127,13 @@ Create `data-model.md`, `contracts/`, and `quickstart.md` describing:
 - the user flow for saving, reopening, editing, and leaving notes blank,
 - the validation steps for ensuring month view stays unchanged.
 
+<!-- gardener-maintenance-note:start b62c2796-afeb-40ec-a4d4-caf6cb07a430 -->
+## Gardener maintenance note
+
+Gardener opened this maintenance PR from plan `b62c2796-afeb-40ec-a4d4-caf6cb07a430`.
+
+- Goal: QA seeded docs plan 10
+- Evidence: Seeded for COD-207 slice B QA.
+- Entropy impact: none
+- Verification: Markdown note only.
+<!-- gardener-maintenance-note:end b62c2796-afeb-40ec-a4d4-caf6cb07a430 -->
