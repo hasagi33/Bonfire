@@ -74,3 +74,14 @@ natural-sky mood. They are easy to audit, easy to theme, and cheap to render.
   expensive to maintain.
 - *Animate a gradient continuously across the day*: visually nice, but the user explicitly said a
   focus refresh is enough and continuous drift is unnecessary.
+
+<!-- gardener-maintenance-note:start 402162c7-8933-4c5d-b3f7-09945355e0ac -->
+## Gardener maintenance note
+
+Gardener opened this maintenance PR from plan `402162c7-8933-4c5d-b3f7-09945355e0ac`.
+
+- Goal: QA seeded docs plan 7
+- Evidence: Seeded for COD-207 slice B QA.
+- Entropy impact: none
+- Verification: Markdown note only.
+<!-- gardener-maintenance-note:end 402162c7-8933-4c5d-b3f7-09945355e0ac -->
