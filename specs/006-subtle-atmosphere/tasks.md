@@ -175,3 +175,4 @@ With multiple developers:
 - [Story] label maps task to a specific user story for traceability
 - Keep the atmosphere derived and lightweight; avoid timers, polling, or expensive date logic
 - Preserve the existing fire behavior and keep the panels visually separate
+<!-- qa cod-207 B1 touch -->
