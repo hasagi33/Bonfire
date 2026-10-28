@@ -82,3 +82,14 @@ atmosphere features, so Fire Health should do the same.
 - *Introduce a separate animation system*: unnecessary and riskier for performance.
 - *Compute health in the render body every frame*: would be harder to test and could add avoidable
   work.
+
+<!-- gardener-maintenance-note:start dadb9e4d-dfc7-4650-be14-dffd91d9015f -->
+## Gardener maintenance note
+
+Gardener opened this maintenance PR from plan `dadb9e4d-dfc7-4650-be14-dffd91d9015f`.
+
+- Goal: QA seeded docs plan 1
+- Evidence: Seeded for COD-207 slice B QA.
+- Entropy impact: none
+- Verification: Markdown note only.
+<!-- gardener-maintenance-note:end dadb9e4d-dfc7-4650-be14-dffd91d9015f -->
