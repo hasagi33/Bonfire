@@ -105,3 +105,14 @@ As a user, I can still read the fire and fixed UI clearly while the atmosphere c
 - The background remains abstract and atmospheric rather than depicting a literal landscape.
 - The fire and fixed panels keep their current visual role and are not restyled to match the atmosphere.
 - The app updates the atmosphere when it becomes active rather than requiring continuous background processing.
+
+<!-- gardener-maintenance-note:start 1689ceb8-715c-4226-a567-269c2fa6be17 -->
+## Gardener maintenance note
+
+Gardener opened this maintenance PR from plan `1689ceb8-715c-4226-a567-269c2fa6be17`.
+
+- Goal: QA seeded docs plan 8
+- Evidence: Seeded for COD-207 slice B QA.
+- Entropy impact: none
+- Verification: Markdown note only.
+<!-- gardener-maintenance-note:end 1689ceb8-715c-4226-a567-269c2fa6be17 -->
