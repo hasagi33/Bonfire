@@ -148,3 +148,14 @@ With multiple developers:
    - Developer A: FireCaption and Flame presentation
    - Developer B: regression tests for no gameplay change
    - Developer C: polish/performance cleanup
+
+<!-- gardener-maintenance-note:start 0c75c29b-fba7-4d57-90e9-8f407a865373 -->
+## Gardener maintenance note
+
+Gardener opened this maintenance PR from plan `0c75c29b-fba7-4d57-90e9-8f407a865373`.
+
+- Goal: QA seeded docs plan 3
+- Evidence: Seeded for COD-207 slice B QA.
+- Entropy impact: none
+- Verification: Markdown note only.
+<!-- gardener-maintenance-note:end 0c75c29b-fba7-4d57-90e9-8f407a865373 -->
