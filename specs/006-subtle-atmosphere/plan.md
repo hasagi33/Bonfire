@@ -99,3 +99,14 @@ day/night, seasonal change, screenshot readability, and app-focus refresh).
 ## Complexity Tracking
 
 *No constitution violations — table intentionally empty.*
+
+<!-- gardener-maintenance-note:start 3910dd28-8c73-401e-8b5e-1c649aec6614 -->
+## Gardener maintenance note
+
+Gardener opened this maintenance PR from plan `3910dd28-8c73-401e-8b5e-1c649aec6614`.
+
+- Goal: QA seeded docs plan 6
+- Evidence: Seeded for COD-207 slice B QA.
+- Entropy impact: none
+- Verification: Markdown note only.
+<!-- gardener-maintenance-note:end 3910dd28-8c73-401e-8b5e-1c649aec6614 -->
