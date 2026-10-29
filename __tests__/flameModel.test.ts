@@ -80,22 +80,22 @@ describe('flameVisual', () => {
 
 // ===========================================================================
 // Profile → render descriptors (spec 004). Pure mappings: a flame's
-// BonfireDesign visualProfile becomes fully-defaulted numbers for the renderer.
+// BonfireDesign look becomes fully-defaulted numbers for the renderer.
 // ===========================================================================
 
-const profileOf = (id: string): VisualProfile => flameById(id).visualProfile!;
+const profileOf = (id: string): VisualProfile => flameById(id).look!;
 
 describe('resolveVisualProfile / fallback (US1)', () => {
   test('returns the style profile when present', () => {
     const style = flameById('voidfire');
-    expect(resolveVisualProfile(style)).toBe(style.visualProfile);
+    expect(resolveVisualProfile(style)).toBe(style.look);
   });
 
   test('falls back to the Amber-like default for missing/malformed profiles', () => {
     expect(resolveVisualProfile(undefined)).toBe(DEFAULT_VISUAL_PROFILE);
     expect(resolveVisualProfile(null)).toBe(DEFAULT_VISUAL_PROFILE);
-    expect(resolveVisualProfile({ visualProfile: undefined })).toBe(DEFAULT_VISUAL_PROFILE);
-    const broken = { visualProfile: { shape: { tongues: [] } } } as never;
+    expect(resolveVisualProfile({ look: undefined })).toBe(DEFAULT_VISUAL_PROFILE);
+    const broken = { look: { shape: { tongues: [] } } } as never;
     expect(resolveVisualProfile(broken)).toBe(DEFAULT_VISUAL_PROFILE);
   });
 
@@ -116,7 +116,7 @@ describe('resolveShapeDescriptor — all 16 variants (US1)', () => {
 
   test('every BonfireDesign variant is represented by some catalog flame', () => {
     const { FLAMES } = jest.requireActual('../src/domain/flames');
-    const seen = new Set(FLAMES.map((f: { visualProfile?: VisualProfile }) => f.visualProfile?.shape.variant));
+    const seen = new Set(FLAMES.map((f: { look?: VisualProfile }) => f.look?.shape.variant));
     for (const v of VARIANTS) expect(seen.has(v)).toBe(true);
   });
 
@@ -185,7 +185,7 @@ describe('resolveParticleDescriptors (US3)', () => {
     const { FLAMES } = jest.requireActual('../src/domain/flames');
     const kinds = new Set<string>();
     for (const f of FLAMES) {
-      for (const d of resolveParticleDescriptors(f.visualProfile)) kinds.add(d.kind);
+      for (const d of resolveParticleDescriptors(f.look)) kinds.add(d.kind);
     }
     expect([...kinds].sort()).toEqual(['ash', 'bubbles', 'motes', 'shards', 'sparks', 'stars', 'wisps']);
   });

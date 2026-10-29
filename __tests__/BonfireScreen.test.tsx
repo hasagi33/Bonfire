@@ -449,9 +449,9 @@ function findEmbers(tree: ReactTestRenderer.ReactTestRenderer) {
 test('the active FlameStyle is passed to Flame, while the calendar no longer lifts it (004 US1)', async () => {
   const tree = await renderScreen();
   const flame = findFlame(tree);
-  // activeStyle reaches the flame and carries the BonfireDesign visualProfile…
+  // activeStyle reaches the flame and carries the BonfireDesign look…
   expect(flame.props.activeStyle.id).toBe('amber');
-  expect(flame.props.activeStyle.visualProfile.shape.variant).toBe('classic');
+  expect(flame.props.activeStyle.look.shape.variant).toBe('classic');
   // …while every prior prop still passes through unchanged.
   expect(flame.props.palette).toBeTruthy();
   expect(typeof flame.props.dim).toBe('number');
@@ -465,10 +465,10 @@ test('the active FlameStyle is passed to Embers for its particle mix (004 US3)',
   const tree = await renderScreen();
   const embers = findEmbers(tree);
   expect(embers.props.activeStyle.id).toBe('amber');
-  expect(Array.isArray(embers.props.activeStyle.visualProfile.particles)).toBe(true);
+  expect(Array.isArray(embers.props.activeStyle.look.particles)).toBe(true);
 });
 
-test('equipping a flame swaps the visualProfile reaching Flame and Embers (004 US1/US3)', async () => {
+test('equipping a flame swaps the look reaching Flame and Embers (004 US1/US3)', async () => {
   await seedEntries(consecutiveFivesEndingToday());
   const tree = await renderScreen();
 
@@ -478,7 +478,7 @@ test('equipping a flame swaps the visualProfile reaching Flame and Embers (004 U
   });
 
   expect(findFlame(tree).props.activeStyle.id).toBe('crimson');
-  expect(findFlame(tree).props.activeStyle.visualProfile.shape.edge).toBe('sharp');
+  expect(findFlame(tree).props.activeStyle.look.shape.edge).toBe('sharp');
   expect(findEmbers(tree).props.activeStyle.id).toBe('crimson');
 });
 

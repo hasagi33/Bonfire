@@ -2,7 +2,7 @@
  * Flame.tsx — the hero: a GPU-rendered bonfire flame (React Native Skia).
  *
  * Since spec 004 this is a GENERIC, profile-driven renderer: it reads the
- * active flame's BonfireDesign `visualProfile` (shape variant, per-tongue
+ * active flame's BonfireDesign `look` (shape variant, per-tongue
  * transforms, edge treatment, motion family/speed, aura kind, accents, palette
  * intent, footprint, core scale) and draws Skia equivalents of the
  * BonfireDesign CSS rig (`BonfireDesign/flame-renderer.jsx` / `flame-catalog.css`):
@@ -80,7 +80,7 @@ import {
 
 export interface FlameProps {
   fire: FireState;
-  // The active catalog flame; its BonfireDesign visualProfile drives the shape,
+  // The active catalog flame; its BonfireDesign look drives the shape,
   // motion, aura, and accents. Missing/invalid profiles fall back to Amber-like.
   activeStyle?: FlameStyle;
   palette: Palette;

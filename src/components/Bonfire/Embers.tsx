@@ -5,7 +5,7 @@
  *  - ambient background embers (`styles.css .bg-embers`): ~14 slow, faint motes
  *    drifting up the whole scene, always on.
  *  - PROFILE particles (spec 004, `BonfireDesign/flame-profiles.js`): the active
- *    flame's `visualProfile.particles` mix — sparks/motes/ash/bubbles/shards/
+ *    flame's `look.particles` mix — sparks/motes/ash/bubbles/shards/
  *    wisps/stars — each population with its own count, color, size, rise and
  *    speed, brightness scaling with the fire's `intensity` (0 when not lit, so
  *    out-state precedence holds: no live particles on a dead fire).
@@ -34,7 +34,7 @@ export interface EmbersProps {
   height: number;
   intensity: number; // 0..1 (0 = not lit → no fire particles)
   palette: Palette;
-  // The active catalog flame; its visualProfile.particles selects the mix.
+  // The active catalog flame; its look.particles selects the mix.
   activeStyle?: FlameStyle;
   // Shared scene clock from BonfireScreen; avoids a second per-frame driver.
   clock: SharedValue<number>;

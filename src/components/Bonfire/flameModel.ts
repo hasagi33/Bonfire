@@ -78,8 +78,8 @@ export function flameVisual(fire: FireState): FlameVisual {
  * nothing) and return a guaranteed-valid profile. Missing/malformed profiles
  * resolve to the Amber-like safe default — never a crash, never a blank flame.
  */
-export function resolveVisualProfile(style?: Pick<FlameStyle, 'visualProfile'> | null): VisualProfile {
-  return safeVisualProfile(style?.visualProfile);
+export function resolveVisualProfile(style?: Pick<FlameStyle, 'look'> | null): VisualProfile {
+  return safeVisualProfile(style?.look);
 }
 
 // One tongue with every transform defaulted (BonfireDesign baseline = identity).

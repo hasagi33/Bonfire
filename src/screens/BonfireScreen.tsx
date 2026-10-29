@@ -177,7 +177,7 @@ function BonfireScreen() {
           Out-state precedence (US2): `Flame` hides itself whenever the fire is
           not lit, so the Hearth's smoke wins. Relocked selections render Amber
           immediately, avoiding the old blackened/embered selected-flame state.
-          `activeStyle` (004) carries the BonfireDesign visualProfile into the
+          `activeStyle` (004) carries the BonfireDesign look into the
           flame (shape/motion/aura/accents) and embers (particle mix); palette +
           dim still control color/energy for the rendered flame. */}
       <View style={StyleSheet.absoluteFill} pointerEvents="none" onLayout={handleSceneLayout}>

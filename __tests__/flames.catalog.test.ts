@@ -178,7 +178,7 @@ const EXPECTED: ExpectedProfile[] = [
 // Shared by the per-flame tests and the validation-helper test below (T021).
 function missingProfileParts(p: VisualProfile | undefined): string[] {
   const missing: string[] = [];
-  if (!p) return ['visualProfile'];
+  if (!p) return ['look'];
   if (!p.shape?.variant || !p.shape?.edge || !p.shape?.tongues?.length) missing.push('shape');
   if (!p.motion?.family || !(p.motion?.speed > 0)) missing.push('motion');
   if (!Array.isArray(p.particles) || p.particles.length === 0) missing.push('particles');
@@ -189,9 +189,9 @@ function missingProfileParts(p: VisualProfile | undefined): string[] {
 }
 
 describe('BonfireDesign profile parity (US4)', () => {
-  test('all 20 flames carry a complete visualProfile', () => {
+  test('all 20 flames carry a complete look', () => {
     for (const f of FLAMES) {
-      expect({ id: f.id, missing: missingProfileParts(f.visualProfile) }).toEqual({ id: f.id, missing: [] });
+      expect({ id: f.id, missing: missingProfileParts(f.look) }).toEqual({ id: f.id, missing: [] });
     }
   });
 
@@ -200,7 +200,7 @@ describe('BonfireDesign profile parity (US4)', () => {
   });
 
   test.each(EXPECTED)('$id matches its BonfireDesign tokens', e => {
-    const p = flameById(e.id).visualProfile!;
+    const p = flameById(e.id).look!;
     expect(p.shape.variant).toBe(e.variant);
     expect(p.shape.edge).toBe(e.edge);
     expect(p.shape.tongues).toHaveLength(e.tongues);
@@ -223,23 +223,23 @@ describe('BonfireDesign profile parity (US4)', () => {
   });
 
   test('BonfireDesign special traits: footprints, core scale, opacity, inverted core', () => {
-    expect(flameById('conflagration').visualProfile!.footprint).toBe(1.3);
-    expect(flameById('nebula').visualProfile!.footprint).toBe(1.2);
-    expect(flameById('solfire').visualProfile!.shape.coreScale).toBe(1.7);
-    expect(flameById('ghostlight').visualProfile!.paletteIntent.opacity).toBe(0.55);
-    expect(flameById('spectral').visualProfile!.paletteIntent.opacity).toBe(0.85);
-    expect(flameById('voidfire').visualProfile!.paletteIntent.invert).toBe(true);
+    expect(flameById('conflagration').look!.footprint).toBe(1.3);
+    expect(flameById('nebula').look!.footprint).toBe(1.2);
+    expect(flameById('solfire').look!.shape.coreScale).toBe(1.7);
+    expect(flameById('ghostlight').look!.paletteIntent.opacity).toBe(0.55);
+    expect(flameById('spectral').look!.paletteIntent.opacity).toBe(0.85);
+    expect(flameById('voidfire').look!.paletteIntent.invert).toBe(true);
   });
 
   test('multi-variant particle mixes are preserved (Ember/Solfire/Aurora/Phoenix/Nebula)', () => {
-    expect(flameById('ember').visualProfile!.particles.map(d => d.kind)).toEqual(['ash', 'sparks']);
-    expect(flameById('solfire').visualProfile!.particles.map(d => d.kind)).toEqual(['stars', 'motes']);
-    expect(flameById('aurora').visualProfile!.particles.map(d => d.kind)).toEqual(['wisps', 'motes']);
-    expect(flameById('phoenix').visualProfile!.particles.map(d => d.kind)).toEqual(['sparks', 'ash']);
-    expect(flameById('nebula').visualProfile!.particles.map(d => d.kind)).toEqual(['stars', 'motes']);
+    expect(flameById('ember').look!.particles.map(d => d.kind)).toEqual(['ash', 'sparks']);
+    expect(flameById('solfire').look!.particles.map(d => d.kind)).toEqual(['stars', 'motes']);
+    expect(flameById('aurora').look!.particles.map(d => d.kind)).toEqual(['wisps', 'motes']);
+    expect(flameById('phoenix').look!.particles.map(d => d.kind)).toEqual(['sparks', 'ash']);
+    expect(flameById('nebula').look!.particles.map(d => d.kind)).toEqual(['stars', 'motes']);
     // Every particle entry has a positive count and a color.
     for (const f of FLAMES) {
-      for (const d of f.visualProfile!.particles) {
+      for (const d of f.look!.particles) {
         expect(d.n).toBeGreaterThan(0);
         expect(d.color.length).toBeGreaterThan(0);
       }
@@ -247,12 +247,12 @@ describe('BonfireDesign profile parity (US4)', () => {
   });
 
   test('the validation helper detects missing tokens (T021)', () => {
-    const broken = JSON.parse(JSON.stringify(flameById('amber').visualProfile)) as VisualProfile;
+    const broken = JSON.parse(JSON.stringify(flameById('amber').look)) as VisualProfile;
     // @ts-expect-error — deliberately malformed for the negative test
     delete broken.aura;
     const missing = missingProfileParts(broken);
     expect(missing).toContain('aura');
-    expect(missingProfileParts(undefined)).toEqual(['visualProfile']);
+    expect(missingProfileParts(undefined)).toEqual(['look']);
   });
 
   test('safeVisualProfile falls back to the Amber-like default for malformed input', () => {
@@ -260,16 +260,16 @@ describe('BonfireDesign profile parity (US4)', () => {
     expect(safeVisualProfile(null)).toBe(DEFAULT_VISUAL_PROFILE);
     const broken = { shape: { variant: 'classic', tongues: [] } } as unknown as VisualProfile;
     expect(safeVisualProfile(broken)).toBe(DEFAULT_VISUAL_PROFILE);
-    const valid = flameById('voidfire').visualProfile!;
+    const valid = flameById('voidfire').look!;
     expect(safeVisualProfile(valid)).toBe(valid);
   });
 });
 
 // ---------------------------------------------------------------------------
-// US5 invariants: visualProfile is additive — it must not change any existing
+// US5 invariants: look is additive — it must not change any existing
 // catalog meaning the engine/UI relies on.
 // ---------------------------------------------------------------------------
-describe('visualProfile does not change existing catalog behavior (US5)', () => {
+describe('look does not change existing catalog behavior (US5)', () => {
   // The exact pre-004 catalog facts, pinned: achievements, rarity, drift.
   const LEGACY: [string, string | null, number][] = [
     ['amber', null, 0],

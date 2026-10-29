@@ -18,7 +18,7 @@
  * so `paletteFromGradient` samples the hot end into `core` and the cool end into
  * `red`. The dim, locked-state `embered` variant is derived once per flame.
  *
- * VISUAL PROFILES (spec 004): every flame also carries a `visualProfile` — the
+ * VISUAL PROFILES (spec 004): every flame also carries a `look` — the
  * BonfireDesign-derived description of HOW it should look beyond color: shape
  * variant + per-tongue transforms, motion family/speed, particle mix, aura kind,
  * and special accents. The data is translated 1:1 from
@@ -218,7 +218,7 @@ export interface FlameStyle {
   palette: Palette; // 5-stop palette the Skia flame consumes (sampled from gradient)
   embered: Palette; // dim/desaturated locked-state variant (FR-014/FR-024)
   achievement: Achievement | null; // null ONLY for the base flame
-  visualProfile?: VisualProfile; // BonfireDesign visual identity (spec 004)
+  look?: VisualProfile; // BonfireDesign visual identity (spec 004)
 }
 
 export const BASE_FLAME_ID: FlameId = 'amber';
@@ -226,7 +226,7 @@ export const BASE_FLAME_ID: FlameId = 'amber';
 /**
  * Small builder so each catalog row stays compact: it samples the gradient
  * into the render palette and precomputes the embered variant. Keeping this here
- * means a new flame is genuinely "append one entry". `visualProfile` is optional
+ * means a new flame is genuinely "append one entry". `look` is optional
  * in the signature (renderers fall back safely), but every catalog row supplies
  * one — the parity tests enforce that.
  */
@@ -237,13 +237,13 @@ function flame(
   rarity: number,
   gradient: string[],
   achievement: Achievement | null,
-  visualProfile?: VisualProfile,
+  look?: VisualProfile,
   drift?: { hueDeg: number; ms: number },
 ): FlameStyle {
   const palette = paletteFromGradient(gradient);
   return {
     id, name, tier, rarity, gradient, palette,
-    embered: emberedPalette(palette), achievement, drift, visualProfile,
+    embered: emberedPalette(palette), achievement, drift, look,
   };
 }
 
