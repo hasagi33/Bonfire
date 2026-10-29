@@ -77,7 +77,7 @@ test('autosaves edited draft text for the selected day', async () => {
   expect(latest.savedText).toBe('exact words stay here');
 });
 
-test('blank autosave clears selected day note without touching other notes', async () => {
+test('empty autosave clears selected day note without touching other notes', async () => {
   await AsyncStorage.setItem(
     'bonfire.dayNotes.v1',
     JSON.stringify({
@@ -88,12 +88,12 @@ test('blank autosave clears selected day note without touching other notes', asy
   await renderProbe();
 
   await act(async () => {
-    latest.setDraft('   ');
+    latest.setDraft('');
   });
 
   expect(JSON.parse((await AsyncStorage.getItem('bonfire.dayNotes.v1'))!)).toEqual({
     '2026-06-11': 'keep me',
   });
-  expect(latest.draft).toBe('   ');
+  expect(latest.draft).toBe('');
   expect(latest.savedText).toBe('');
 });

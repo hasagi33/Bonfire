@@ -21,7 +21,7 @@ function cleanNotes(parsed: unknown): DayNotes {
 
   const clean: DayNotes = {};
   for (const [dateKey, text] of Object.entries(parsed)) {
-    if (typeof text === 'string' && text.trim().length > 0) {
+    if (typeof text === 'string' && text.length > 0) {
       clean[dateKey] = text;
     }
   }
@@ -50,13 +50,13 @@ export async function saveDayNotes(notes: DayNotes): Promise<void> {
 }
 
 /**
- * Save or replace a single note. Blank and whitespace-only text removes the note
- * for that day; nonblank text is stored verbatim with no trimming or analysis.
+ * Save or replace a single note. Empty text removes the note
+ * for that day; other text is stored verbatim with no trimming or analysis.
  */
 export async function saveDayNote(dateKey: DateKey, text: string): Promise<DayNotes> {
   const notes = await loadDayNotes();
   const next = { ...notes };
-  if (text.trim().length === 0) {
+  if (text.length === 0) {
     delete next[dateKey];
   } else {
     next[dateKey] = text;

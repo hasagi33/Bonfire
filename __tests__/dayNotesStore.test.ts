@@ -27,8 +27,8 @@ test('saves then reopens the same note text', async () => {
   });
 });
 
-test('rejects blank and whitespace-only note input', async () => {
-  await saveDayNote('2026-06-10', '   ');
+test('rejects empty note input', async () => {
+  await saveDayNote('2026-06-10', '');
 
   expect(await loadDayNotes()).toEqual({});
 });

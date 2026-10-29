@@ -3,7 +3,7 @@
  *
  * The hook loads all local notes once, mirrors the selected day's saved note
  * into an editable draft, and autosaves each edit. It keeps validation tiny:
- * whitespace-only drafts clear storage, while nonblank drafts persist exactly
+ * empty drafts clear storage, while any other draft persists exactly
  * as typed.
  */
 
@@ -63,7 +63,7 @@ export function useDayNotes(selectedDate: DateKey | null): UseDayNotes {
       setDraftState({ dateKey, text });
       setNotes(prev => {
         const next = { ...prev };
-        if (text.trim().length === 0) {
+        if (text.length === 0) {
           delete next[dateKey];
         } else {
           next[dateKey] = text;
