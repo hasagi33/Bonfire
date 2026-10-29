@@ -7,12 +7,11 @@
  * order-independent and recomputes correctly after any backfill/edit (SC-005).
  *
  * Two gates:
- *  - streak flames unlock WHILE the current run satisfies their condition AND the
- *    fire is lit; the fire going out (or an edit dropping the run) relocks them.
+ *  - streak flames unlock WHILE the current run satisfies their condition; an
+ *    edit dropping the run relocks them.
  *  - time flames unlock on the calendar day their condition completes (D) and
- *    stay unlocked through D + windowDays − 1 while the fire is lit; past
- *    that they expire until re-earned (no day-banking — the LATEST completion
- *    always wins).
+ *    stay unlocked through D + windowDays − 1; past that they expire until
+ *    re-earned (no day-banking — the LATEST completion always wins).
  *
  * Each condition kind is a tiny pure evaluator (below). Time evaluators scan the
  * per-day `timeline` for the LATEST day the condition completes, plus a "best
@@ -248,8 +247,7 @@ export function evaluateFlame(
   if (ach.type === 'streak') {
     return {
       flameId: flame.id,
-      // A streak flame is unlocked only while the fire is lit AND the run holds.
-      unlocked: fire.state === 'lit' && cond.complete,
+      unlocked: cond.complete,
       progress: cond.progress,
       achievementDay: null,
       daysLeft: null,
@@ -257,14 +255,14 @@ export function evaluateFlame(
     };
   }
 
-  // time flame: window D … D + windowDays − 1, gated on the fire being lit.
+  // time flame: window D … D + windowDays − 1.
   const D = cond.completionDay ?? null;
   const window = ach.windowDays ?? 0;
   const lastDay = D !== null ? addDays(D, window) : null;
   const inWindow = D !== null && lastDay !== null && today < lastDay;
   return {
     flameId: flame.id,
-    unlocked: inWindow && fire.state === 'lit',
+    unlocked: inWindow,
     progress: cond.progress,
     achievementDay: D,
     daysLeft: lastDay !== null ? diffDays(lastDay, today) : null, // (D+W) − today

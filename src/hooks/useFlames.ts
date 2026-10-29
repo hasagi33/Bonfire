@@ -41,10 +41,16 @@ export function useFlames(
   // on values, not the fire object's identity — an unrelated re-render that
   // recreates `fire` does not trigger a re-walk.
   const { state: fireState, strength: fireStrength } = fire;
-  const states = useMemo(
-    () => evaluateAll(FLAMES, entries, today, { state: fireState, strength: fireStrength }),
-    [entries, today, fireState, fireStrength],
-  );
+  const states = useMemo(() => {
+    const evaluated = evaluateAll(FLAMES, entries, today, { state: fireState, strength: fireStrength });
+    if (fireState === 'lit') return evaluated;
+    // Only a lit fire keeps earned flames.
+    const out: Record<FlameId, AchievementState> = {};
+    for (const [id, st] of Object.entries(evaluated)) {
+      out[id] = flameById(id).achievement ? { ...st, unlocked: false } : st;
+    }
+    return out;
+  }, [entries, today, fireState, fireStrength]);
 
   const newlyUnlocked = useMemo<FlameId[]>(() => [], []);
 

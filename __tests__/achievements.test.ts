@@ -120,7 +120,7 @@ test('#6 time completed D, today = D+W+1 → expired and locked (FR-007)', () =>
   expect(st.daysLeft).toBe(-1);
 });
 
-test('#7 time in-window but fire out → locked; relight within window → unlocked (FR-007a)', () => {
+test('#7 time in-window survives the fire going out; relight within window → unlocked', () => {
   // D = day(-4), window 7 (lastDay in the future), then two misses → out.
   const out = build([
     [-6, 5],
@@ -132,7 +132,7 @@ test('#7 time in-window but fire out → locked; relight within window → unloc
   expect(computeFire(out, TODAY).state).toBe('out');
   expect(stOut.achievementDay).toBe(day(-4));
   expect(stOut.expired).toBe(false); // still inside the window
-  expect(stOut.unlocked).toBe(false); // but the fire is out
+  expect(stOut.unlocked).toBe(true); // the window itself is still valid
 
   // Relight today (a single 5 doesn't re-complete the 3-in-a-row, so D is unchanged).
   const relit = { ...out, [day(0)]: 5 as Score };
