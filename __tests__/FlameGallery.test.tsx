@@ -5,7 +5,7 @@
  * it hand-built states and assert the four row presentations: unlocked (with the
  * time countdown), locked-streak progress, locked-time partial, and expired
  * re-earn — plus the locked-selection guard: pressing a LOCKED row must NOT fire
- * `onEquip` (it shows a brief rejection cue instead), while unlocked rows still
+ * `onEquip`, while unlocked rows still
  * equip normally (003 feature, contracts/locked-selection.md).
  */
 
@@ -111,15 +111,11 @@ test('an expired time flame prompts re-earn (US4.4)', () => {
   expect(row(tree, 'Toxic').props.accessibilityLabel).toContain('Expired — re-earn');
 });
 
-// ---- Locked-selection guard (003 US1, FR-001/FR-002) ----
+// ---- Locked-selection guard (003 US1, FR-001) ----
 // Regression: before the fix, FlameRow equipped ANY flame, so the locked-press
-// case below failed (onEquip WAS called). Now a locked press must be rejected
-// with a visible cue and the row must read as disabled to assistive tech.
-// Fake timers: the cue auto-clears via setTimeout; we flush it inside the test
-// so no state update leaks past the test's end.
-
-test('pressing a LOCKED flame does NOT equip it and shows a rejection cue (FR-001, FR-002)', () => {
-  jest.useFakeTimers();
+// case below failed (onEquip WAS called). Now a locked press must be ignored
+// and the row must read as disabled to assistive tech.
+test('pressing a LOCKED flame does NOT equip it (FR-001)', () => {
   const { tree, onEquip } = render(baseStates());
   const voidfire = row(tree, 'Voidfire');
 
@@ -128,23 +124,13 @@ test('pressing a LOCKED flame does NOT equip it and shows a rejection cue (FR-00
   expect(voidfire.props.accessibilityLabel).toContain('Locked');
 
   act(() => {
-    voidfire.props.onPress(); // locked — must be rejected
+    voidfire.props.onPress();
   });
 
   expect(onEquip).not.toHaveBeenCalled();
-  // The visible rejection cue renders (testID on the animated row wrapper), so
-  // FR-002's "visible feedback" can't silently regress.
-  expect(tree.root.findAllByProps({ testID: 'flame-reject-voidfire' }).length).toBeGreaterThan(0);
-
-  // The cue is one-shot: it clears itself after ~250ms.
-  act(() => {
-    jest.runAllTimers();
-  });
-  expect(tree.root.findAllByProps({ testID: 'flame-reject-voidfire' }).length).toBe(0);
-  jest.useRealTimers();
 });
 
-test('pressing an UNLOCKED flame still equips it, with no rejection cue (FR-003)', () => {
+test('pressing an UNLOCKED flame still equips it (FR-003)', () => {
   const { tree, onEquip } = render(baseStates());
   const amber = row(tree, 'Amber');
 
@@ -155,5 +141,4 @@ test('pressing an UNLOCKED flame still equips it, with no rejection cue (FR-003)
   });
 
   expect(onEquip).toHaveBeenCalledWith('amber');
-  expect(tree.root.findAllByProps({ testID: 'flame-reject-amber' }).length).toBe(0);
 });

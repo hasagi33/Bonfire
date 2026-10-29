@@ -7,7 +7,7 @@
  * name, requirement, and live progress (full teasers — FR-016/017/018, SC-008).
  *
  * Tapping an UNLOCKED row equips that flame and closes the gallery. LOCKED rows
- * never equip (003 US1, FR-001): `FlameRow` rejects the tap with a brief cue and
+ * never equip (003 US1, FR-001): `FlameRow` ignores the tap and
  * the screen's `onEquip` guard would drop a locked id anyway.
  */
 

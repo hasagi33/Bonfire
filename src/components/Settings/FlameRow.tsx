@@ -10,22 +10,14 @@
  *  - locked time, expired → "Expired — re-earn: <requirement>"
  *
  * Tapping an UNLOCKED row equips the flame. Tapping a LOCKED row never equips
- * (FR-001): instead the row plays a brief ~250ms shake-and-flash rejection cue
- * (FR-002) so the user sees the tap landed but the flame must be earned first.
- * Accessibility: each row is a radio whose selected state marks the active
- * flame; locked rows are additionally announced as disabled with a
+ * (FR-001). Accessibility: each row is a radio whose selected state marks the
+ * active flame; locked rows are additionally announced as disabled with a
  * "Locked — <requirement>" label.
  */
 
-import React, { useEffect, useRef, useState } from 'react';
+import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withSequence,
-  withTiming,
-} from 'react-native-reanimated';
 import type { AchievementState } from '../../domain/achievements';
 import type { FlameId, FlameStyle } from '../../domain/flames';
 import { bg2, core, ink, inkDim, inkFaint, line } from '../../theme/tokens';
@@ -37,9 +29,6 @@ interface FlameRowProps {
   justUnlocked?: boolean; // one-shot celebration when the flame flips to unlocked (FR-023)
   onPress: (id: FlameId) => void;
 }
-
-// How long the locked-tap rejection cue stays visible (shake + flash), in ms.
-const REJECT_MS = 250;
 
 // The swatch colors: full gradient when unlocked, embered stops when locked.
 function swatchColors(flame: FlameStyle, unlocked: boolean): string[] {
@@ -83,42 +72,12 @@ function FlameRow({ flame, state, active, justUnlocked = false, onPress }: Flame
   // A freshly earned flame gets a brief celebratory label + glow tint so the
   // user notices the unlock without a popup (FR-023, in-app only).
   const status = justUnlocked ? `Just unlocked! ${text}` : text;
-  // Locked rows announce their state up front so the rejection isn't a surprise.
+  // Locked rows announce their state up front.
   const a11yStatus = unlocked ? status : `Locked — ${status}`;
 
-  // ---- Locked-tap rejection cue (FR-002) ----
-  // `rejecting` gates the cue's testID + flash tint; `shakeX` drives a quick
-  // left-right wobble. Both reset after REJECT_MS so the cue is one-shot.
-  const [rejecting, setRejecting] = useState(false);
-  const shakeX = useSharedValue(0);
-  const rejectTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  useEffect(() => {
-    // Don't let a pending cue reset fire after the row unmounts.
-    return () => {
-      if (rejectTimer.current) clearTimeout(rejectTimer.current);
-    };
-  }, []);
-
   const handlePress = () => {
-    if (unlocked) {
-      onPress(flame.id); // normal equip path, unchanged (FR-003)
-      return;
-    }
-    // Locked: never equip — shake the row instead.
-    setRejecting(true);
-    shakeX.value = withSequence(
-      withTiming(-6, { duration: 60 }),
-      withTiming(6, { duration: 60 }),
-      withTiming(-4, { duration: 60 }),
-      withTiming(0, { duration: 70 }),
-    );
-    if (rejectTimer.current) clearTimeout(rejectTimer.current);
-    rejectTimer.current = setTimeout(() => setRejecting(false), REJECT_MS);
+    if (unlocked) onPress(flame.id);
   };
-
-  const shakeStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: shakeX.value }],
-  }));
 
   return (
     <Pressable
@@ -131,11 +90,7 @@ function FlameRow({ flame, state, active, justUnlocked = false, onPress }: Flame
         justUnlocked && styles.rowJustUnlocked,
         pressed && styles.rowPressed,
       ]}>
-      {/* the animated wrapper carries the shake + flash; its testID only exists
-          while the rejection cue is playing, so tests can assert visibility */}
-      <Animated.View
-        testID={rejecting ? `flame-reject-${flame.id}` : undefined}
-        style={[styles.inner, rejecting && styles.innerRejecting, shakeStyle]}>
+      <View style={styles.inner}>
         {/* gradient swatch — at least 2 stops are required by LinearGradient */}
         <LinearGradient
           colors={colors.length >= 2 ? (colors as [string, string, ...string[]]) : [colors[0], colors[0]]}
@@ -157,7 +112,7 @@ function FlameRow({ flame, state, active, justUnlocked = false, onPress }: Flame
         </View>
 
         {active && <Text style={styles.check}>✓</Text>}
-      </Animated.View>
+      </View>
     </Pressable>
   );
 }
@@ -170,16 +125,12 @@ const styles = StyleSheet.create({
   },
   rowPressed: { backgroundColor: 'rgba(255,255,255,0.05)' },
   rowJustUnlocked: { backgroundColor: 'rgba(255,174,59,0.10)' },
-  // Inner wrapper holds the row layout so the rejection shake can move it
-  // without disturbing the Pressable's own hit area.
   inner: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
     borderRadius: 10,
   },
-  // Brief warm flash behind a rejected (locked) tap.
-  innerRejecting: { backgroundColor: 'rgba(255,122,24,0.12)' },
   swatch: {
     width: 34,
     height: 44,
