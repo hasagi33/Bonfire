@@ -77,7 +77,7 @@ afterEach(() => {
   rendered = null;
 });
 
-test('renders Radiant Fire Health and passes the state to the flame', async () => {
+test('renders Bright Fire Health for a perfect week and passes the state to the flame', async () => {
   const today = todayKey();
   await seedEntries(
     build(Array.from({ length: 7 }, (_, index) => [addDays(today, index - 7), 5] as [string, Score])),
@@ -86,11 +86,11 @@ test('renders Radiant Fire Health and passes the state to the flame', async () =
   const tree = await renderScreen();
   const flame = findFlame(tree);
 
-  expect(allText(tree)).toContain('Radiant');
-  expect(allText(tree)).not.toMatch(/fire health Radiant/i);
+  expect(allText(tree)).toContain('Bright');
+  expect(allText(tree)).not.toMatch(/fire health Bright/i);
   expect(flame.props.health).toMatchObject({
-    name: 'radiant',
-    label: 'Radiant',
+    name: 'bright',
+    label: 'Bright',
     visible: true,
     sampleCount: 7,
   });

@@ -72,8 +72,7 @@ const DEFAULT_HEALTH: FireHealthState = {
 function stateForQuality(qualityIndex: number): FireHealthName {
   if (qualityIndex < 0.34) return 'faint';
   if (qualityIndex < 0.52) return 'steady';
-  if (qualityIndex < 0.75) return 'bright';
-  return 'radiant';
+  return 'bright';
 }
 
 function toQuality(score: Score): number {

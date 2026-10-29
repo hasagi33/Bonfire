@@ -82,11 +82,11 @@ test('defaults to Steady for sparse histories with fewer than 3 scored days', ()
   });
 });
 
-test('maps weighted quality into Faint, Steady, Bright, and Radiant', () => {
+test('maps weighted quality into Faint, Steady, and Bright', () => {
   expect(deriveFireHealth(build([[-2, 1], [-1, 1], [0, 2]]), litFire, addDays(TODAY, 1)).name).toBe('faint');
   expect(deriveFireHealth(build([[-2, 2], [-1, 3], [0, 3]]), litFire, addDays(TODAY, 1)).name).toBe('steady');
   expect(deriveFireHealth(build([[-2, 3], [-1, 3], [0, 4]]), litFire, addDays(TODAY, 1)).name).toBe('bright');
-  expect(deriveFireHealth(build([[-2, 4], [-1, 4], [0, 5]]), litFire, addDays(TODAY, 1)).name).toBe('radiant');
+  expect(deriveFireHealth(build([[-2, 4], [-1, 4], [0, 5]]), litFire, addDays(TODAY, 1)).name).toBe('bright');
 });
 
 test('newer high scores outweigh older low scores inside the 7-score window', () => {
