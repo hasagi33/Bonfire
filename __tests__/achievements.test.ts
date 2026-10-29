@@ -2,7 +2,7 @@
  * achievements.test.ts — the unlock-gate oracle (contracts/achievement-engine.md
  * rows #1–#10). Calendars are built relative to a fixed injected `today`, and the
  * fire + metrics are derived exactly as the app does, so these prove the streak
- * relock, time window (D+W inclusive), re-earn, and backfill-expired rules.
+ * relock, time window (D … D+W−1), re-earn, and backfill-expired rules.
  */
 
 import { computeFire, type Entries, type Score } from '../src/domain/fire';
@@ -78,7 +78,7 @@ test('#4 time condition completed today, lit → unlocked, daysLeft = W', () => 
   expect(st.expired).toBe(false);
 });
 
-test('#5 time completed D, today = D+W → still unlocked, daysLeft = 0', () => {
+test('#5 time completed D, today = D+W → expired, daysLeft = 0', () => {
   // D = day(-7); fill the gap with non-perfect scores to stay lit without re-earning.
   const entries = build([
     [-9, 5],
@@ -94,7 +94,8 @@ test('#5 time completed D, today = D+W → still unlocked, daysLeft = 0', () => 
   ]);
   const st = evalFlame('toxic', entries);
   expect(st.achievementDay).toBe(day(-7));
-  expect(st.unlocked).toBe(true);
+  expect(st.unlocked).toBe(false);
+  expect(st.expired).toBe(true);
   expect(st.daysLeft).toBe(0);
 });
 

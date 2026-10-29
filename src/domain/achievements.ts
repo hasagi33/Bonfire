@@ -10,7 +10,7 @@
  *  - streak flames unlock WHILE the current run satisfies their condition AND the
  *    fire is lit; the fire going out (or an edit dropping the run) relocks them.
  *  - time flames unlock on the calendar day their condition completes (D) and
- *    stay unlocked through D + windowDays (inclusive) while the fire is lit; past
+ *    stay unlocked through D + windowDays − 1 while the fire is lit; past
  *    that they expire until re-earned (no day-banking — the LATEST completion
  *    always wins).
  *
@@ -257,18 +257,18 @@ export function evaluateFlame(
     };
   }
 
-  // time flame: window D + windowDays inclusive, gated on the fire being lit.
+  // time flame: window D … D + windowDays − 1, gated on the fire being lit.
   const D = cond.completionDay ?? null;
   const window = ach.windowDays ?? 0;
   const lastDay = D !== null ? addDays(D, window) : null;
-  const inWindow = D !== null && lastDay !== null && today <= lastDay;
+  const inWindow = D !== null && lastDay !== null && today < lastDay;
   return {
     flameId: flame.id,
     unlocked: inWindow && fire.state === 'lit',
     progress: cond.progress,
     achievementDay: D,
     daysLeft: lastDay !== null ? diffDays(lastDay, today) : null, // (D+W) − today
-    expired: D !== null && lastDay !== null && today > lastDay,
+    expired: D !== null && lastDay !== null && today >= lastDay,
   };
 }
 
