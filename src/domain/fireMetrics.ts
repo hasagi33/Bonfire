@@ -18,7 +18,8 @@
  */
 
 import { addDays, diffDays, isPast, type DateKey } from './dates';
-import { contribution, isScore, type Entries, type Score } from './fire';
+import { isScore, type Entries, type Score } from './fire';
+import { strengthForScore } from './scoring';
 
 /**
  * One calendar day's snapshot AFTER it was processed in the walk. Time-specific
@@ -107,7 +108,7 @@ export function computeMetrics(entries: Entries, today: DateKey): RunMetrics {
         perfectDays = 0;
         scoreSum = 0;
       }
-      strength += contribution(score);
+      strength += strengthForScore(score);
       consMiss = 0;
 
       // Unbroken chain: extend if yesterday was scored, else start a new run of 1.

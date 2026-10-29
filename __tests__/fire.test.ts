@@ -11,24 +11,24 @@ import { addDays } from '../src/domain/dates';
 import {
   classifyDay,
   computeFire,
-  contribution,
   fireLabel,
   type Entries,
   type Score,
 } from '../src/domain/fire';
+import { strengthForScore } from '../src/domain/scoring';
 import { deriveFireHealth } from '../src/domain/fireHealth';
 
 // A fixed "today" for all tests, plus a helper to name days relative to it.
 const TODAY = '2026-06-15';
 const day = (offset: number) => addDays(TODAY, offset); // day(-1) = yesterday
 
-describe('contribution', () => {
+describe('strengthForScore', () => {
   test('maps 1->0 and 2..5 to strictly increasing values', () => {
-    expect(contribution(1)).toBe(0);
-    expect(contribution(2)).toBe(1);
-    expect(contribution(3)).toBe(2);
-    expect(contribution(4)).toBe(3);
-    expect(contribution(5)).toBe(4);
+    expect(strengthForScore(1)).toBe(0);
+    expect(strengthForScore(2)).toBe(1);
+    expect(strengthForScore(3)).toBe(2);
+    expect(strengthForScore(4)).toBe(3);
+    expect(strengthForScore(5)).toBe(4);
   });
 });
 
@@ -63,7 +63,7 @@ describe('computeFire — the streak / miss rule (US2)', () => {
     const entries: Entries = { [day(-2)]: 3, [TODAY]: 4 };
     const fire = computeFire(entries, TODAY);
     expect(fire.state).toBe('lit');
-    expect(fire.strength).toBe(contribution(3) + contribution(4)); // 2 + 3 = 5
+    expect(fire.strength).toBe(strengthForScore(3) + strengthForScore(4)); // 2 + 3 = 5
   });
 
   test('three consecutive missed past days -> fire goes out, strength 0, everLit', () => {
@@ -97,7 +97,7 @@ describe('computeFire — back-fill and clearing (US3, FR-010/FR-011)', () => {
     const repaired: Entries = { [day(-4)]: 5, [day(-3)]: 3 };
     const fire = computeFire(repaired, TODAY);
     expect(fire.state).toBe('lit');
-    expect(fire.strength).toBe(contribution(5) + contribution(3)); // 4 + 2 = 6
+    expect(fire.strength).toBe(strengthForScore(5) + strengthForScore(3)); // 4 + 2 = 6
   });
 
   test('removing a score can create three misses and extinguish the fire', () => {

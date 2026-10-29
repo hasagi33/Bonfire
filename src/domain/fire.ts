@@ -20,6 +20,7 @@
  */
 
 import { addDays, isPast, ymd, type DateKey } from './dates';
+import { strengthForScore } from './scoring';
 
 // A productivity score is an integer from 1 to 5.
 export type Score = 1 | 2 | 3 | 4 | 5;
@@ -45,14 +46,6 @@ export interface FireState {
   strength: number; // ≥ 0; size of the current alive run (0 when not lit)
   everLit: boolean; // any scored day exists (distinguishes unlit vs out)
   label: FireLabel; // caption from fireLabel
-}
-
-/**
- * Map a score to the strength it contributes.
- * 1→0 (maintain only), 2→1, 3→2, 4→3, 5→4 — i.e. `max(0, score − 1)`.
- */
-export function contribution(score: Score): number {
-  return Math.max(0, score - 1);
 }
 
 // Type guard: is this a valid 1–5 score? Guards against corrupt stored data.
@@ -94,7 +87,7 @@ export function computeFire(entries: Entries, today: DateKey): FireState {
         alive = true;
         strength = 0;
       }
-      strength += contribution(score);
+      strength += strengthForScore(score);
       everLit = true;
       consMiss = 0;
     } else if (isPast(cur, today)) {
