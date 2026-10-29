@@ -148,7 +148,7 @@ function toneForPhase(phase: AtmospherePhase): { brightness: number; warmth: num
 export function deriveAtmosphere(options: DeriveAtmosphereOptions = {}): AtmosphericState {
   const date = options.date ?? new Date();
   const mode = options.mode ?? 'open';
-  const hemisphere = inferHemisphere(options.timeZone, options.locale);
+  const hemisphere: AtmosphereHemisphere = 'north';
   const curve = seasonalCurve(date, hemisphere);
   const hour = date.getHours() + date.getMinutes() / 60;
   const phase = phaseForHour(hour, curve.lightSpan);

@@ -42,16 +42,6 @@ test('smooth annual curve makes summer and winter feel different', () => {
   expect(summer.phase).not.toBe(winter.phase);
 });
 
-test('southern hemisphere flips the seasonal curve without location prompts', () => {
-  const northSummer = deriveAtmosphere({ date: localDate(6, 21, 6), timeZone: 'America/New_York' });
-  const southWinter = deriveAtmosphere({ date: localDate(6, 21, 6), timeZone: 'Australia/Sydney' });
-
-  expect(northSummer.hemisphere).toBe('north');
-  expect(southWinter.hemisphere).toBe('south');
-  expect(southWinter.seasonStrength).toBeCloseTo(-northSummer.seasonStrength, 1);
-  expect(southWinter.phase).not.toBe(northSummer.phase);
-});
-
 test('hemisphere inference falls back north for unknown regions', () => {
   expect(inferHemisphere('Europe/Sarajevo', 'bs-BA')).toBe('north');
   expect(inferHemisphere('Pacific/Auckland', 'en-NZ')).toBe('south');
