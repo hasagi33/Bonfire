@@ -9,7 +9,7 @@
 
 import React from 'react';
 import ReactTestRenderer, { act } from 'react-test-renderer';
-import { AppState, BackHandler } from 'react-native';
+import { BackHandler } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import BonfireScreen, { fireLayoutForWidth } from '../src/screens/BonfireScreen';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -173,32 +173,6 @@ test('atmosphere renders behind the fire scene and leaves flame prominence uncha
 
   expect(screen?.children?.[0]).toMatchObject({ props: { testID: 'bonfire-atmosphere' } });
   expect(flame.props.dim).toBe(1);
-});
-
-test('atmosphere refreshes on app focus without mutating fire state', async () => {
-  let onAppStateChange: ((state: string) => void) | undefined;
-  const remove = jest.fn();
-  jest.spyOn(AppState, 'addEventListener').mockImplementation((_event, handler) => {
-    onAppStateChange = handler;
-    return { remove };
-  });
-
-  const tree = await renderScreen();
-  const fireBefore = findFlame(tree).props.fire;
-
-  await act(async () => {
-    onAppStateChange?.('background');
-  });
-  expect(tree.root.findByProps({ testID: 'bonfire-atmosphere' }).props.nativeID).toContain('-open-');
-
-  await act(async () => {
-    onAppStateChange?.('active');
-  });
-
-  expect(tree.root.findByProps({ testID: 'bonfire-atmosphere' }).props.nativeID).toContain(
-    '-focus-',
-  );
-  expect(findFlame(tree).props.fire).toBe(fireBefore);
 });
 
 test('logging a 5 today lights the fire (US1)', async () => {

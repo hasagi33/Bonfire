@@ -20,7 +20,6 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  AppState,
   BackHandler,
   StyleSheet,
   View,
@@ -75,7 +74,7 @@ function BonfireScreen() {
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
   const [sceneSize, setSceneSize] = useState({ width, height });
-  const [atmosphere, setAtmosphere] = useState(() => deriveAtmosphere());
+  const [atmosphere] = useState(() => deriveAtmosphere());
 
   const today: DateKey = useMemo(() => todayKey(), []);
   const [selectedDate, setSelectedDate] = useState<DateKey | null>(null);
@@ -169,19 +168,6 @@ function BonfireScreen() {
 
     return () => subscription.remove();
   }, [closeCalendar, progress, selectedDate]);
-
-  // Refresh the derived sky only when the app becomes active. This keeps the
-  // atmosphere aligned with local time without adding timers or per-frame work.
-  useEffect(() => {
-    const refreshAtmosphere = () => {
-      setAtmosphere(deriveAtmosphere({ mode: 'focus' }));
-    };
-    const subscription = AppState.addEventListener('change', nextState => {
-      if (nextState === 'active') refreshAtmosphere();
-    });
-
-    return () => subscription.remove();
-  }, []);
 
   return (
     <View testID="bonfire-screen" style={styles.screen}>
