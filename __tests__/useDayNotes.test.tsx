@@ -45,7 +45,7 @@ afterEach(() => {
   rendered = null;
 });
 
-test('syncs the draft when the selected day changes', async () => {
+test('starts a fresh draft when the selected day changes', async () => {
   await AsyncStorage.setItem(
     'bonfire.dayNotes.v1',
     JSON.stringify({
@@ -55,13 +55,15 @@ test('syncs the draft when the selected day changes', async () => {
   );
   await renderProbe();
 
-  expect(latest.draft).toBe('first day');
+  expect(latest.draft).toBe('');
+  expect(latest.savedText).toBe('first day');
 
   await act(async () => {
     setSelected('2026-06-11');
   });
 
-  expect(latest.draft).toBe('second day');
+  expect(latest.draft).toBe('');
+  expect(latest.savedText).toBe('second day');
 });
 
 test('autosaves edited draft text for the selected day', async () => {

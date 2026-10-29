@@ -1,8 +1,8 @@
 /**
  * useDayNotes.ts — selected-day note state for the calendar sheet.
  *
- * The hook loads all local notes once, mirrors the selected day's saved note
- * into an editable draft, and autosaves each edit. It keeps validation tiny:
+ * The hook loads all local notes once, keeps an editable draft for the
+ * selected day, and autosaves each edit. It keeps validation tiny:
  * empty drafts clear storage, while any other draft persists exactly
  * as typed.
  */
@@ -52,7 +52,7 @@ export function useDayNotes(selectedDate: DateKey | null): UseDayNotes {
   }, []);
 
   const savedText = selectedDate ? notes[selectedDate] ?? '' : '';
-  const draft = draftState.dateKey === selectedDate ? draftState.text : savedText;
+  const draft = draftState.dateKey === selectedDate ? draftState.text : '';
 
   const setDraft = useCallback(
     (text: string) => {
