@@ -2,10 +2,8 @@
  * MonthGrid.tsx — the month calendar: title + ‹ › nav, weekday row, day grid.
  *
  * Mirrors `calendar.jsx` (`cal-head`, `cal-dow`, `cal-grid`). It owns the
- * currently-viewed month and lets the user page backward without limit, but the
- * "next" (›) button is disabled once the current month is in view — there are no
- * future months to browse (FR-020, the one deliberate deviation from the design,
- * whose next button is unrestricted).
+ * currently-viewed month and lets the user page backward and forward with the
+ * ‹ › buttons. Future days stay non-tappable in the grid itself.
  */
 
 import React, { useMemo, useState } from 'react';
@@ -33,10 +31,6 @@ interface MonthGridProps {
 function MonthGrid({ today, entries, selectedDate, onSelectDay, fireHealth }: MonthGridProps) {
   const todayDate = useMemo(() => parseYmd(today), [today]);
   const [view, setView] = useState(() => ({ y: todayDate.getFullYear(), m: todayDate.getMonth() }));
-
-  // Is the viewed month the current (real) month? If so, hide "next".
-  const atCurrentMonth =
-    view.y === todayDate.getFullYear() && view.m === todayDate.getMonth();
 
   function shift(delta: number) {
     setView(v => {
@@ -72,16 +66,10 @@ function MonthGrid({ today, entries, selectedDate, onSelectDay, fireHealth }: Mo
             <Text style={styles.navText}>‹</Text>
           </Pressable>
           <Pressable
-            onPress={() => !atCurrentMonth && shift(1)}
-            disabled={atCurrentMonth}
+            onPress={() => shift(1)}
             accessibilityRole="button"
-            accessibilityState={{ disabled: atCurrentMonth }}
             accessibilityLabel="Next month"
-            style={({ pressed }) => [
-              styles.navBtn,
-              atCurrentMonth && styles.navDisabled,
-              pressed && !atCurrentMonth && styles.navPressed,
-            ]}>
+            style={({ pressed }) => [styles.navBtn, pressed && styles.navPressed]}>
             <Text style={styles.navText}>›</Text>
           </Pressable>
         </View>
@@ -149,7 +137,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  navDisabled: { opacity: 0.3 },
   navPressed: { transform: [{ scale: 0.92 }], backgroundColor: 'rgba(255,255,255,0.08)' },
   navText: { color: ink, fontSize: 16, lineHeight: 18 },
   dow: { flexDirection: 'row', marginBottom: 6 },

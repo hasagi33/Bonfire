@@ -276,17 +276,15 @@ test('daily memory stays out of month view labels and visible text', async () =>
   expect(allText(tree)).not.toMatch(/note badge|note preview|memory marker/i);
 });
 
-test('can page back a month; next is capped at the current month (US3, FR-020)', async () => {
+test('can page back a month and forward again (US3)', async () => {
   const tree = await renderScreen();
-  const nextBtn = () => tree.root.find(n => n.props.accessibilityLabel === 'Next month');
-
-  // Starts on the current month → "next" is disabled (no future months).
-  expect(nextBtn().props.accessibilityState.disabled).toBe(true);
+  const before = allText(tree);
 
   await press(tree, 'Previous month');
+  expect(allText(tree)).not.toEqual(before);
 
-  // After paging back, "next" is enabled again (back toward the current month).
-  expect(nextBtn().props.accessibilityState.disabled).toBe(false);
+  await press(tree, 'Next month');
+  expect(allText(tree)).toEqual(before);
 });
 
 test('back action closes the score picker before leaving the calendar', async () => {
