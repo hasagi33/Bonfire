@@ -424,7 +424,7 @@ const PROFILES: Record<FlameId, VisualProfile> = {
     },
     motion: { family: 'harsh', speed: 0.55 },
     aura: { kind: 'wide' },
-    accents: ['shockPulse'],
+    accents: [],
     particles: [{ kind: 'sparks', n: 16, color: '#ffb03a', size: 1.2, rise: 1.3 }],
     footprint: 1.3,
     paletteIntent: { glow: '255,120,20' },

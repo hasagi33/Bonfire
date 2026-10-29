@@ -166,7 +166,7 @@ const EXPECTED: ExpectedProfile[] = [
   { id: 'ember', num: '12', tier: 'rare', variant: 'squat', edge: 'round', tongues: 1, auraKind: 'wide', auraDim: true, accents: [], particles: ['ash', 'sparks'], family: 'smooth', speed: 1.6, pulse: 'coal' },
   { id: 'spectral', num: '13', tier: 'rare', variant: 'layered', edge: 'round', tongues: 3, auraKind: 'oval', auraDim: true, accents: ['afterimage'], particles: ['motes'], family: 'smooth', speed: 1.4, opacity: 0.85 },
   { id: 'frostfire', num: '14', tier: 'rare', variant: 'crystal', edge: 'crystal', tongues: 3, auraKind: 'oval', auraCrisp: true, accents: [], particles: ['shards'], family: 'harsh', speed: 0.85 },
-  { id: 'conflagration', num: '15', tier: 'rare', variant: 'crown', edge: 'round', tongues: 5, auraKind: 'wide', accents: ['shockPulse'], particles: ['sparks'], family: 'harsh', speed: 0.55, footprint: 1.3 },
+  { id: 'conflagration', num: '15', tier: 'rare', variant: 'crown', edge: 'round', tongues: 5, auraKind: 'wide', accents: [], particles: ['sparks'], family: 'harsh', speed: 0.55, footprint: 1.3 },
   { id: 'solfire', num: '16', tier: 'rare', variant: 'solar', edge: 'round', tongues: 1, auraKind: 'circular', accents: ['solarCircle'], particles: ['stars', 'motes'], family: 'smooth', speed: 0.9, pulse: 'core', coreScale: 1.7 },
   { id: 'voidfire', num: '17', tier: 'rare', variant: 'inverted', edge: 'sharp', tongues: 1, auraKind: 'ring', accents: ['voidRing'], particles: ['motes'], family: 'smooth', speed: 1.2, invert: true },
   { id: 'aurora', num: '18', tier: 'rare', variant: 'ribbon', edge: 'round', tongues: 3, auraKind: 'wide', auraDim: true, accents: ['auroraBand'], particles: ['wisps', 'motes'], family: 'smooth', speed: 1.9, hueDrift: 14, ribbon: true },
