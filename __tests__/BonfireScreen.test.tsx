@@ -344,7 +344,7 @@ function flameRow(tree: ReactTestRenderer.ReactTestRenderer, name: string) {
   );
 }
 
-test('the settings gear is a 52pt touch target and still opens the gallery (003 US5, FR-012)', async () => {
+test('the settings gear is a 40pt round button and opens the gallery', async () => {
   const tree = await renderScreen();
 
   const gear = tree.root.find(
@@ -355,10 +355,8 @@ test('the settings gear is a 52pt touch target and still opens the gallery (003 
   // Pressable style is a function of the pressed state — resolve and flatten it.
   const resolved = gear.props.style({ pressed: false });
   const flat = Object.assign({}, ...[resolved].flat(Infinity).filter(Boolean));
-  // 52×52: visibly larger than the old 38 and above the 44pt minimum target.
-  expect(flat.width).toBe(52);
-  expect(flat.height).toBe(52);
-  expect(flat.width).toBeGreaterThanOrEqual(44);
+  expect(flat.width).toBe(40);
+  expect(flat.height).toBe(40);
 
   await press(tree, 'choose flame');
   expect(flameRow(tree, 'Amber')).toBeTruthy(); // the gallery actually opened

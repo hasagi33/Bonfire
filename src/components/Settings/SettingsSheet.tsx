@@ -48,13 +48,12 @@ function SettingsSheet({ states, activeId, onEquip, newlyUnlocked, top }: Settin
 }
 
 const styles = StyleSheet.create({
-  // 52×52 (003 US5): comfortably above the 44pt minimum touch target.
   gear: {
     position: 'absolute',
     right: 14,
-    width: 52,
-    height: 52,
-    borderRadius: 26,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     borderWidth: 1,
     borderColor: line,
     backgroundColor: 'rgba(10,14,26,0.7)',
@@ -63,7 +62,7 @@ const styles = StyleSheet.create({
     zIndex: 58,
   },
   gearPressed: { transform: [{ scale: 0.92 }] },
-  gearIcon: { fontSize: 26, color: ink },
+  gearIcon: { fontSize: 20, color: ink },
 });
 
 export default React.memo(SettingsSheet);
