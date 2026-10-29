@@ -12,9 +12,6 @@
  * A shared `progress` value (0 closed → 1 open) is owned here and passed to the
  * calendar sheet (which drives it) and caption (which fades out behind it).
  * The flame stays physically fixed; opening the calendar should not move the fire.
- *
- * Until both stores finish loading we show a plain dark screen (no premature
- * "unlit" flash — FR-015).
  */
 
 /* eslint-disable react-hooks/immutability --
@@ -83,13 +80,9 @@ function BonfireScreen() {
   const today: DateKey = useMemo(() => todayKey(), []);
   const [selectedDate, setSelectedDate] = useState<DateKey | null>(null);
 
-  const { entries, fire, ready: entriesReady, setScore, clearScore } = useEntries(today);
-  const {
-    draft: noteDraft,
-    ready: notesReady,
-    setDraft: setNoteDraft,
-  } = useDayNotes(selectedDate);
-  const { settings, ready: settingsReady, setFlameStyle } = useSettings();
+  const { entries, fire, setScore, clearScore } = useEntries(today);
+  const { draft: noteDraft, setDraft: setNoteDraft } = useDayNotes(selectedDate);
+  const { settings, setFlameStyle } = useSettings();
 
   // Derive every flame's unlock state + what the active flame should render.
   // If a saved selection relocks, `useFlames` renders Amber immediately while
@@ -190,13 +183,6 @@ function BonfireScreen() {
     return () => subscription.remove();
   }, []);
 
-  const ready = entriesReady && notesReady && settingsReady;
-
-  // Loading: a plain dark screen until both stores load (FR-015).
-  if (!ready) {
-    return <View style={[styles.screen, styles.loading]} />;
-  }
-
   return (
     <View testID="bonfire-screen" style={styles.screen}>
       <Atmosphere state={atmosphere} />
@@ -267,7 +253,6 @@ function BonfireScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: bg0 },
-  loading: { backgroundColor: bg0 },
 });
 
 export default BonfireScreen;
