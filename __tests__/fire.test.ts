@@ -66,8 +66,8 @@ describe('computeFire — the streak / miss rule (US2)', () => {
     expect(fire.strength).toBe(strengthForScore(3) + strengthForScore(4)); // 2 + 3 = 5
   });
 
-  test('three consecutive missed past days -> fire goes out, strength 0, everLit', () => {
-    const entries: Entries = { [day(-4)]: 5 };
+  test('two consecutive missed past days -> fire goes out, strength 0, everLit', () => {
+    const entries: Entries = { [day(-3)]: 5 };
     const fire = computeFire(entries, TODAY);
     expect(fire.state).toBe('out');
     expect(fire.strength).toBe(0);
@@ -82,7 +82,7 @@ describe('computeFire — the streak / miss rule (US2)', () => {
   });
 
   test('out then relight starts a fresh run from zero', () => {
-    const entries: Entries = { [day(-5)]: 5, [day(-1)]: 4, [TODAY]: 5 };
+    const entries: Entries = { [day(-4)]: 5, [day(-1)]: 4, [TODAY]: 5 };
     const fire = computeFire(entries, TODAY);
     expect(fire.state).toBe('lit');
     expect(fire.strength).toBe(7); // new run only: 4->3 + 5->4
@@ -91,20 +91,20 @@ describe('computeFire — the streak / miss rule (US2)', () => {
 
 describe('computeFire — back-fill and clearing (US3, FR-010/FR-011)', () => {
   test('back-filling a missed day repairs the streak', () => {
-    const broken: Entries = { [day(-4)]: 5 };
+    const broken: Entries = { [day(-3)]: 5 };
     expect(computeFire(broken, TODAY).state).toBe('out');
 
-    const repaired: Entries = { [day(-4)]: 5, [day(-3)]: 3 };
+    const repaired: Entries = { [day(-3)]: 5, [day(-2)]: 3 };
     const fire = computeFire(repaired, TODAY);
     expect(fire.state).toBe('lit');
     expect(fire.strength).toBe(strengthForScore(5) + strengthForScore(3)); // 4 + 2 = 6
   });
 
-  test('removing a score can create three misses and extinguish the fire', () => {
-    const lit: Entries = { [day(-4)]: 5, [day(-3)]: 5 };
+  test('removing a score can create two misses and extinguish the fire', () => {
+    const lit: Entries = { [day(-3)]: 5, [day(-2)]: 5 };
     expect(computeFire(lit, TODAY).state).toBe('lit');
 
-    const cleared: Entries = { [day(-4)]: 5 };
+    const cleared: Entries = { [day(-3)]: 5 };
     expect(computeFire(cleared, TODAY).state).toBe('out');
   });
 

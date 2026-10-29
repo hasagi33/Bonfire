@@ -123,7 +123,7 @@ test('does not count the current day in Fire Health', async () => {
 
 test('suppresses Fire Health label and flame visibility state when fire is out', async () => {
   const today = todayKey();
-  await seedEntries(build([[addDays(today, -4), 5]]));
+  await seedEntries(build([[addDays(today, -3), 5]]));
 
   const tree = await renderScreen();
   const flame = findFlame(tree);

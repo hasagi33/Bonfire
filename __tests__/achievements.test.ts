@@ -39,12 +39,12 @@ test('#1 streak condition met and lit → unlocked', () => {
 });
 
 test('#2 streak met, then the fire goes out → relocked (FR-005)', () => {
-  // Strength reached, then three missed days extinguish the fire.
+  // Strength reached, then two missed days extinguish the fire.
   const entries = build([
-    [-6, 5],
     [-5, 5],
     [-4, 5],
-    // -3, -2, -1 missed → out; today unscored
+    [-3, 5],
+    // -2, -1 missed → out; today unscored
   ]);
   const st = evalFlame('crimson', entries);
   expect(computeFire(entries, TODAY).state).toBe('out');

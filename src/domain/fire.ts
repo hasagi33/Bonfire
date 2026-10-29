@@ -12,7 +12,7 @@
  *    4→3, 5→4. A score of 1 keeps the fire alive but adds no size.
  *  - The fire's strength is the running total of contributions in the CURRENT
  *    alive run.
- *  - Up to two missed PAST days are survivable. THREE missed past days in a row put the
+ *  - One missed PAST day is survivable. TWO missed past days in a row put the
  *    fire OUT and reset its strength to 0. A later score relights it from 0.
  *  - "Today", while unscored, is not a miss yet.
  *  - The result depends only on the (date, score) pairs and today, so editing /
@@ -60,7 +60,7 @@ export function isScore(value: unknown): value is Score {
  *  - A scored day adds its contribution; if the fire was out/unlit it first
  *    relights from a spark (strength 0) then adds.
  *  - A past day with no score is a miss; today unscored is NOT a miss.
- *  - Three consecutive missed past days extinguish the fire (strength → 0).
+ *  - Two consecutive missed past days extinguish the fire (strength → 0).
  * Whatever run is alive at today is the fire we show. (Mirrors logic.js.)
  */
 export function computeFire(entries: Entries, today: DateKey): FireState {
@@ -93,7 +93,7 @@ export function computeFire(entries: Entries, today: DateKey): FireState {
     } else if (isPast(cur, today)) {
       // A past day with no score = a miss.
       consMiss += 1;
-      if (consMiss >= 3 && alive) {
+      if (consMiss >= 2 && alive) {
         alive = false;
         strength = 0;
       }
@@ -122,7 +122,7 @@ export function classifyDay(entries: Entries, dateKey: DateKey, today: DateKey):
 /** A human label + descriptor for the current fire (mirrors logic.js). */
 export function fireLabel(state: FireStatus, strength: number): FireLabel {
   if (state === 'unlit') return { word: 'Unlit', sub: 'tap a day to spark it' };
-  if (state === 'out') return { word: 'Out', sub: 'three days missed' };
+  if (state === 'out') return { word: 'Out', sub: 'two days missed' };
   if (strength <= 0) return { word: 'A spark', sub: 'just catching' };
   if (strength < 6) return { word: 'Kindling', sub: 'finding its feet' };
   if (strength < 14) return { word: 'Steady', sub: 'burning well' };

@@ -186,9 +186,9 @@ test('logging a 5 today lights the fire (US1)', async () => {
   expect(text).not.toMatch(/tap a day to spark it/i);
 });
 
-test('three consecutive missed days extinguish the fire (US2)', async () => {
+test('two consecutive missed days extinguish the fire (US2)', async () => {
   const today = todayKey();
-  await seedEntries({ [addDays(today, -4)]: 3 as Score });
+  await seedEntries({ [addDays(today, -3)]: 3 as Score });
   const tree = await renderScreen();
 
   expect(findFlame(tree).props.fire.state).toBe('out');
@@ -371,10 +371,10 @@ test('an equipped streak flame relocks when the fire goes out, then re-earns (US
   });
   rendered = null;
 
-  // Same saved Crimson selection, but calendar now has three missed past days.
+  // Same saved Crimson selection, but calendar now has two missed past days.
   await seedEntries({
-    [addDays(today, -5)]: 5 as Score,
     [addDays(today, -4)]: 5 as Score,
+    [addDays(today, -3)]: 5 as Score,
   });
   const relockedTree = await renderScreen();
   expect(findFlame(relockedTree).props.fire.state).toBe('out');
@@ -484,7 +484,7 @@ test('equipping a flame swaps the look reaching Flame and Embers (004 US1/US3)',
 
 test('out-state precedence: the live flame is hidden when the fire goes out (004 US5)', async () => {
   const today = todayKey();
-  await seedEntries({ [addDays(today, -4)]: 3 as Score });
+  await seedEntries({ [addDays(today, -3)]: 3 as Score });
   const tree = await renderScreen();
 
   // The flame still receives its profile, but its fire prop says `out`, so the

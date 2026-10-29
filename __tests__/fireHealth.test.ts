@@ -107,7 +107,7 @@ test('newer high scores outweigh older low scores inside the 7-score window', ()
 });
 
 test('suppresses visibility and returns neutral visual modifiers when fire is out', () => {
-  const outFire = computeFire(build([[-4, 5]]), TODAY);
+  const outFire = computeFire(build([[-3, 5]]), TODAY);
   const health = readEmberMood(build([[-6, 5], [-5, 5], [-4, 5], [-3, 5]]), outFire, TODAY);
 
   expect(outFire.state).toBe('out');
