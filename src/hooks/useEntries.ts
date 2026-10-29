@@ -4,7 +4,7 @@
  * Components use this hook to read the current entries + derived fire state, and
  * to change scores. It:
  *   - loads saved entries once on mount (and flips `ready` to true),
- *   - validates and applies score changes, then persists them,
+ *   - validates and applies score changes,
  *   - recomputes the fire (via the pure engine) whenever entries or today change.
  *
  * The fire is always DERIVED from entries — never stored separately — so there
@@ -20,7 +20,7 @@ import {
   type FireState,
   type Score,
 } from '../domain/fire';
-import { loadEntries, saveEntries } from '../data/entriesStore';
+import { loadEntries } from '../data/entriesStore';
 
 export interface UseEntries {
   entries: Entries; // raw date -> score map
@@ -53,20 +53,13 @@ export function useEntries(today: DateKey): UseEntries {
   }, []);
 
   // Add or replace a day's score. Rejects invalid scores and future dates so
-  // bad data can never reach storage or the fire engine. Persisting is
-  // fire-and-forget because the data is local and tiny; the UI updates at once.
+  // bad data can never reach the fire engine; the UI updates at once.
   const setScore = useCallback(
     (date: DateKey, score: Score) => {
       if (!isScore(score) || isFuture(date, today)) {
         return; // ignore invalid input (FR-003)
       }
-      setEntries(prev => {
-        const next = { ...prev, [date]: score };
-        // Persist in the background; storage failures are non-fatal for a local
-        // personal tracker, so we just ignore them.
-        saveEntries(next).catch(() => {});
-        return next;
-      });
+      setEntries(prev => ({ ...prev, [date]: score }));
     },
     [today],
   );
@@ -79,7 +72,6 @@ export function useEntries(today: DateKey): UseEntries {
       }
       const next = { ...prev };
       delete next[date];
-      saveEntries(next).catch(() => {});
       return next;
     });
   }, []);
