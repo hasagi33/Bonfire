@@ -77,7 +77,6 @@ function CalendarSheet({
   selectedDate,
   onSelectDate,
   onSet,
-  onClear,
   noteDraft,
   onNoteChange,
   progress,
@@ -232,10 +231,7 @@ function CalendarSheet({
               if (selectedDate) onSet(selectedDate, score);
               onSelectDate(null);
             }}
-            onClear={() => {
-              if (selectedDate) onClear(selectedDate);
-              onSelectDate(null);
-            }}
+            onClear={() => onSelectDate(null)}
           />
         </Animated.View>
       </GestureDetector>

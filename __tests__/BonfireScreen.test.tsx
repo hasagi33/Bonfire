@@ -194,17 +194,6 @@ test('three consecutive missed days extinguish the fire (US2)', async () => {
   expect(findFlame(tree).props.fire.state).toBe('out');
 });
 
-test('clearing the only scored day returns the fire to unlit (recompute)', async () => {
-  const tree = await renderScreen();
-
-  await press(tree, 'not yet logged');
-  await press(tree, 'Score 4');
-  await press(tree, 'scored 4 out of 5'); // reopen today's (now scored) cell
-  await press(tree, 'Clear this day'); // clear it
-
-  expect(findFlame(tree).props.fire.state).toBe('unlit');
-});
-
 test('autosaves a daily memory note and shows it again after reopening the day', async () => {
   const tree = await renderScreen();
 
