@@ -1,8 +1,8 @@
 /**
  * FlameRow.tsx — one row in the flame gallery.
  *
- * Shows a gradient swatch (full colors when unlocked, the dim "embered" colors
- * when locked), the flame's name, and a status line that depends on the derived
+ * Shows a gradient swatch (full colors when unlocked, a neutral slate when
+ * locked), the flame's name, and a status line that depends on the derived
  * `AchievementState`:
  *  - unlocked streak/base → "Unlocked"
  *  - unlocked time        → "Unlocked · Nd left" (the window countdown)
@@ -30,11 +30,11 @@ interface FlameRowProps {
   onPress: (id: FlameId) => void;
 }
 
-// The swatch colors: full gradient when unlocked, embered stops when locked.
+// The swatch colors: full gradient when unlocked, a neutral slate when locked.
+const LOCKED_SWATCH = ['#3a3f4b', '#23262e'];
+
 function swatchColors(flame: FlameStyle, unlocked: boolean): string[] {
-  if (unlocked) return flame.gradient;
-  const e = flame.embered;
-  return [e.core, e.gold, e.amber, e.ember, e.red];
+  return unlocked ? flame.gradient : LOCKED_SWATCH;
 }
 
 // The status line + an optional 0..1 progress fraction for the bar.
