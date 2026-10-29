@@ -104,7 +104,7 @@ function seasonalCurve(date: Date, hemisphere: AtmosphereHemisphere): SeasonalCu
   // Cosine gives a smooth annual signal: +1 near local summer, -1 near winter.
   const seasonStrength =
     Math.cos(((dayOfYear - summerPeak) / 365) * Math.PI * 2) * hemisphereMultiplier;
-  const lightSpan = seasonStrength * 1.35;
+  const lightSpan = -seasonStrength * 1.35;
 
   return {
     dayOfYear,
