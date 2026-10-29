@@ -146,16 +146,6 @@ export interface PaletteIntent {
   glow?: string; // BonfireDesign glow rgb triple, kept for parity review
 }
 
-// Review-traceability labels copied from BonfireDesign — all six are required.
-export interface DesignReference {
-  silhouette: string;
-  core: string;
-  aura: string;
-  particles: string;
-  motion: string;
-  implementationIntent: string;
-}
-
 // Optional per-flame visual response to the existing fire strength. These only
 // scale visuals; they must never feed back into fire math or unlock state.
 export interface StrengthResponse {
@@ -167,10 +157,6 @@ export interface StrengthResponse {
 
 // Everything the renderers need to draw one flame's BonfireDesign identity.
 export interface VisualProfile {
-  source: string; // always BONFIRE_DESIGN_SOURCE for catalog rows
-  designNumber: string; // BonfireDesign catalog number '01'..'20'
-  designTier: 'common' | 'rare'; // BonfireDesign visual grouping
-  tagline: string; // BonfireDesign tagline (review traceability)
   shape: ShapeProfile;
   motion: MotionProfile;
   particles: ParticleProfile[];
@@ -179,11 +165,7 @@ export interface VisualProfile {
   footprint?: number; // whole-flame scale (Conflagration 1.3, Nebula 1.2)
   paletteIntent: PaletteIntent;
   strengthResponse?: StrengthResponse;
-  designRef: DesignReference;
 }
-
-// Marker recorded on every profile so parity reviews can trace data → source.
-export const BONFIRE_DESIGN_SOURCE = 'BonfireDesign';
 
 /**
  * The Amber-like safe profile: the baseline every other flame only overrides.
@@ -191,25 +173,12 @@ export const BONFIRE_DESIGN_SOURCE = 'BonfireDesign';
  * blanks the flame).
  */
 export const DEFAULT_VISUAL_PROFILE: VisualProfile = {
-  source: BONFIRE_DESIGN_SOURCE,
-  designNumber: '01',
-  designTier: 'common',
-  tagline: 'Classic balanced bonfire',
   shape: { variant: 'classic', edge: 'round', tongues: [{}] },
   motion: { family: 'smooth', speed: 1 },
   aura: { kind: 'oval' },
   accents: [],
   particles: [{ kind: 'sparks', n: 8, color: '#ffae3b' }],
   paletteIntent: { glow: '255,150,40' },
-  designRef: {
-    silhouette: 'Single rounded teardrop; soft shoulders, gentle taper.',
-    core: 'Warm cream core, centered low, standard ratio.',
-    aura: 'Oval warm halo, medium spread.',
-    particles: 'Standard sparks, medium rate, slight outward drift.',
-    motion: 'Soft 1.5s flicker loop, no modifiers — the baseline all others derive from.',
-    implementationIntent:
-      'Default profile: shape:classic + sparks + aura:oval. Every other flame only overrides tokens from this base.',
-  },
 };
 
 /**
@@ -231,8 +200,7 @@ export function safeVisualProfile(profile?: VisualProfile | null): VisualProfile
     Array.isArray(profile.particles) &&
     profile.aura &&
     typeof profile.aura.kind === 'string' &&
-    Array.isArray(profile.accents) &&
-    profile.designRef != null
+    Array.isArray(profile.accents)
   ) {
     return profile;
   }
@@ -296,68 +264,36 @@ function time(
 // The 20 BonfireDesign visual profiles, translated 1:1 from
 // `BonfireDesign/flame-profiles.js`. Token values (tongue transforms, speeds,
 // particle counts/colors, footprints, core scales, opacities) are copied
-// verbatim; `labels` become `designRef` (impl → implementationIntent).
+// verbatim.
 // ---------------------------------------------------------------------------
 
 const PROFILES: Record<FlameId, VisualProfile> = {
   amber: DEFAULT_VISUAL_PROFILE,
   crimson: {
-    source: BONFIRE_DESIGN_SOURCE, designNumber: '02', designTier: 'common',
-    tagline: 'Sharper, faster, hungrier',
     shape: { variant: 'classic', edge: 'sharp', tongues: [{ sx: 0.94, sy: 1.04 }] },
     motion: { family: 'smooth', speed: 0.7 },
     aura: { kind: 'oval' },
     accents: [],
     particles: [{ kind: 'sparks', n: 11, color: '#ff5a3a', size: 1.25 }],
     paletteIntent: { glow: '255,70,50' },
-    designRef: {
-      silhouette: 'Classic teardrop with sharper, pointed tongue tips.',
-      core: 'Hot peach core, slightly raised.',
-      aura: 'Oval halo, red-shifted, a touch stronger than Amber.',
-      particles: 'Heavier red sparks, roughly 40% more frequent.',
-      motion: 'Same flicker rig at 0.7× period — reads as a faster pulse.',
-      implementationIntent: 'shape:classic + edge:sharp. Only palette, spark weight and speed differ from Amber.',
-    },
   },
   sapphire: {
-    source: BONFIRE_DESIGN_SOURCE, designNumber: '03', designTier: 'common',
-    tagline: 'Tall, cool, elegant',
     shape: { variant: 'classic', edge: 'round', tongues: [{ sx: 0.9, sy: 1.3 }] },
     motion: { family: 'smooth', speed: 1.7 },
     aura: { kind: 'tall' },
     accents: [],
     particles: [{ kind: 'sparks', n: 7, color: '#bfe0ff', size: 0.85, rise: 1.2 }],
     paletteIntent: { glow: '90,150,255' },
-    designRef: {
-      silhouette: 'Tall slender teardrop, ~30% taller than Amber at the same footprint.',
-      core: 'Blue-white core, elongated.',
-      aura: 'Tall halo hugging the vertical silhouette.',
-      particles: 'Sparse blue-white sparks that climb higher before fading.',
-      motion: 'Slow elegant sway — 1.7× period, low amplitude.',
-      implementationIntent: 'shape:classic stretched via sy token; aura:tall. No new geometry.',
-    },
   },
   sodium: {
-    source: BONFIRE_DESIGN_SOURCE, designNumber: '04', designTier: 'common',
-    tagline: 'Narrow yellow lance',
     shape: { variant: 'lance', edge: 'sharp', tongues: [{ sx: 0.55, sy: 1.45 }] },
     motion: { family: 'smooth', speed: 0.4 },
     aura: { kind: 'tall', crisp: true },
     accents: [],
     particles: [{ kind: 'sparks', n: 12, color: '#fff2a0', size: 0.55, rise: 0.8, speed: 0.8 }],
     paletteIntent: { glow: '255,210,40' },
-    designRef: {
-      silhouette: 'Narrow vertical lance; almost no shoulders.',
-      core: 'Very bright yellow-white core filling most of the lance.',
-      aura: 'Tall narrow halo with a crisp edge.',
-      particles: 'Tiny rapid crackles staying close to the body.',
-      motion: 'Fast shimmer — 0.4× flicker period, small amplitude.',
-      implementationIntent: 'shape:lance = classic with sx 0.55 / sy 1.45; sparks at small size, high rate.',
-    },
   },
   strontium: {
-    source: BONFIRE_DESIGN_SOURCE, designNumber: '05', designTier: 'common',
-    tagline: 'Jagged red split',
     shape: {
       variant: 'split', edge: 'jagged',
       tongues: [{ dx: -0.09, rot: -8, sx: 0.7, sy: 0.97 }, { dx: 0.09, rot: 8, sx: 0.7, sy: 0.9, lag: 0.2 }],
@@ -367,18 +303,8 @@ const PROFILES: Record<FlameId, VisualProfile> = {
     accents: [],
     particles: [{ kind: 'sparks', n: 10, color: '#ff7a4a', rise: 0.55, speed: 0.7 }],
     paletteIntent: { glow: '255,60,40' },
-    designRef: {
-      silhouette: 'Split twin-peak silhouette with jagged, broken edges.',
-      core: 'Two short hot cores, one per fork.',
-      aura: 'Dim red oval — heat reads from the body, not the glow.',
-      particles: 'Short hot spark bursts; quick rise, early fade.',
-      motion: 'Aggressive flicker — harsh keyframe family at 0.5× period.',
-      implementationIntent: 'shape:split (two tongue transforms) + edge:jagged clip-path + flicker:harsh.',
-    },
   },
   emerald: {
-    source: BONFIRE_DESIGN_SOURCE, designNumber: '06', designTier: 'common',
-    tagline: 'Forked organic green',
     shape: {
       variant: 'forked', edge: 'round',
       tongues: [
@@ -392,18 +318,8 @@ const PROFILES: Record<FlameId, VisualProfile> = {
     accents: [],
     particles: [{ kind: 'motes', n: 8, color: '#7defa8' }],
     paletteIntent: { glow: '40,220,120' },
-    designRef: {
-      silhouette: 'Forked: tall center with two leaning side tongues.',
-      core: 'Mint-white core in the central tongue only.',
-      aura: 'Oval green halo, standard spread.',
-      particles: 'Leaf-like green motes that sway as they drift upward.',
-      motion: 'Medium pulse at baseline period; side tongues phase-offset.',
-      implementationIntent: 'shape:forked = three tongue transforms; particles:motes. Organic feel comes from mote sway.',
-    },
   },
   lilac: {
-    source: BONFIRE_DESIGN_SOURCE, designNumber: '07', designTier: 'common',
-    tagline: 'Soft lavender twins',
     shape: {
       variant: 'twin', edge: 'round',
       tongues: [{ dx: -0.09, rot: -4, sx: 0.6, sy: 0.96 }, { dx: 0.09, rot: 4, sx: 0.6, sy: 0.88, lag: 0.4 }],
@@ -413,72 +329,32 @@ const PROFILES: Record<FlameId, VisualProfile> = {
     accents: [],
     particles: [{ kind: 'wisps', n: 5, color: 'rgba(190,160,255,0.55)' }],
     paletteIntent: { glow: '170,140,250' },
-    designRef: {
-      silhouette: 'Two soft parallel tongues of near-equal height.',
-      core: 'Pale cores, low contrast — gentle, not hot.',
-      aura: 'Faint oval lavender halo.',
-      particles: 'Faint violet wisps, slow float.',
-      motion: 'Slow float — 2× period, minimal amplitude.',
-      implementationIntent: 'shape:twin (two tongues) + particles:wisps + aura dim modifier.',
-    },
   },
   magenta: {
-    source: BONFIRE_DESIGN_SOURCE, designNumber: '08', designTier: 'common',
-    tagline: 'Wide and energetic',
     shape: { variant: 'wide', edge: 'round', tongues: [{ sx: 1.38, sy: 0.92 }] },
     motion: { family: 'smooth', speed: 0.8, sway: 7 },
     aura: { kind: 'wide' },
     accents: [],
     particles: [{ kind: 'stars', n: 8, color: '#ff9ade' }],
     paletteIntent: { glow: '255,70,190' },
-    designRef: {
-      silhouette: 'Wide saturated dome — broadest common silhouette.',
-      core: 'Broad pink-white core, low and wide.',
-      aura: 'Wide energetic halo.',
-      particles: 'Pink four-point star sparks.',
-      motion: 'Quick side-to-side sway layered over baseline flicker.',
-      implementationIntent: 'shape:wide via sx token + motion:sway + particles:stars.',
-    },
   },
   ghostlight: {
-    source: BONFIRE_DESIGN_SOURCE, designNumber: '09', designTier: 'rare',
-    tagline: 'Translucent and weightless',
     shape: { variant: 'classic', edge: 'round', tongues: [{ sx: 0.95, sy: 1.05 }] },
     motion: { family: 'smooth', speed: 2.4 },
     aura: { kind: 'oval', dim: true },
     accents: [],
     particles: [{ kind: 'wisps', n: 6, color: 'rgba(170,220,220,0.5)', rise: 1.2 }],
     paletteIntent: { opacity: 0.55, glow: '140,200,200' },
-    designRef: {
-      silhouette: 'Classic teardrop at 55% opacity — a see-through body.',
-      core: 'Pale green-white core, barely brighter than the body.',
-      aura: 'Dim, desaturated halo.',
-      particles: 'Ghost wisps that float up as if weightless.',
-      motion: 'Very slow low-gravity drift — 2.4× period.',
-      implementationIntent: 'shape:classic + bodyOpacity token + particles:wisps + aura dim. No new shapes.',
-    },
   },
   toxic: {
-    source: BONFIRE_DESIGN_SOURCE, designNumber: '10', designTier: 'rare',
-    tagline: 'Bubbling chemical burn',
     shape: { variant: 'warped', edge: 'round', tongues: [{ sx: 1.04, sy: 0.96 }] },
     motion: { family: 'smooth', speed: 1.1, warp: true },
     aura: { kind: 'oval', dim: true },
     accents: [],
     particles: [{ kind: 'bubbles', n: 9, color: '#b8f25e' }],
     paletteIntent: { glow: '140,230,30' },
-    designRef: {
-      silhouette: 'Squat dome with a constantly warping outline.',
-      core: 'Acid-bright core that wobbles off-center.',
-      aura: 'Dim green oval — chemical glow.',
-      particles: 'Bubbles rising inside the body that swell and pop.',
-      motion: 'Border-radius warp loop over baseline flicker — unstable feel.',
-      implementationIntent: 'shape:warped = classic + warp modifier animation; particles:bubbles clipped to the body zone.',
-    },
   },
   wisp: {
-    source: BONFIRE_DESIGN_SOURCE, designNumber: '11', designTier: 'rare',
-    tagline: 'Fragments adrift',
     shape: {
       variant: 'detached', edge: 'round',
       tongues: [
@@ -493,18 +369,8 @@ const PROFILES: Record<FlameId, VisualProfile> = {
     accents: [],
     particles: [{ kind: 'wisps', n: 7, color: 'rgba(80,230,210,0.5)' }],
     paletteIntent: { glow: '50,220,200' },
-    designRef: {
-      silhouette: 'Small core with three detached fragments stacked above it.',
-      core: 'Compact teal core; fragments carry no core layer.',
-      aura: 'Small dim halo around the base only.',
-      particles: 'Teal vapor trails drifting between fragments.',
-      motion: 'Fragments bob independently on slow float offsets.',
-      implementationIntent: 'shape:detached = base tongue + N float-fragment tongues (soft layers only).',
-    },
   },
   ember: {
-    source: BONFIRE_DESIGN_SOURCE, designNumber: '12', designTier: 'rare',
-    tagline: 'Low, dense, smoldering',
     shape: { variant: 'squat', edge: 'round', tongues: [{ sx: 1.22, sy: 0.55 }] },
     motion: { family: 'smooth', speed: 1.6, pulse: 'coal' },
     aura: { kind: 'wide', dim: true },
@@ -514,18 +380,8 @@ const PROFILES: Record<FlameId, VisualProfile> = {
       { kind: 'sparks', n: 4, color: '#ff8c3a', rise: 0.6 },
     ],
     paletteIntent: { glow: '230,90,20' },
-    designRef: {
-      silhouette: 'Low dense dome hugging the logs.',
-      core: 'Deep coal-red core, almost buried.',
-      aura: 'Wide low glow pooled at the ground.',
-      particles: 'Grey ash flecks with occasional slow sparks.',
-      motion: 'Coal-pulse brightness loop instead of tall flicker.',
-      implementationIntent: 'shape:squat via sy token + motion:pulse(coal) + ash+sparks particle mix.',
-    },
   },
   spectral: {
-    source: BONFIRE_DESIGN_SOURCE, designNumber: '13', designTier: 'rare',
-    tagline: 'Layered afterimages',
     shape: {
       variant: 'layered', edge: 'round',
       tongues: [
@@ -539,18 +395,8 @@ const PROFILES: Record<FlameId, VisualProfile> = {
     accents: ['afterimage'],
     particles: [{ kind: 'motes', n: 8, color: '#7fe8f4' }],
     paletteIntent: { opacity: 0.85, glow: '70,210,230' },
-    designRef: {
-      silhouette: 'Main tongue plus two offset ghost copies — afterimage edges.',
-      core: 'Single core; the ghosts are core-less echoes.',
-      aura: 'Dim cyan oval.',
-      particles: 'Cyan spectral motes.',
-      motion: 'Ghost layers lag the main body by 0.3s and 0.6s.',
-      implementationIntent: 'shape:layered = tongue + ghost tongues (opacity + phase-lag tokens). accent:afterimage.',
-    },
   },
   frostfire: {
-    source: BONFIRE_DESIGN_SOURCE, designNumber: '14', designTier: 'rare',
-    tagline: 'Crystalline cold burn',
     shape: {
       variant: 'crystal', edge: 'crystal',
       tongues: [
@@ -564,18 +410,8 @@ const PROFILES: Record<FlameId, VisualProfile> = {
     accents: [],
     particles: [{ kind: 'shards', n: 8, color: '#cfeaff' }],
     paletteIntent: { glow: '130,190,255' },
-    designRef: {
-      silhouette: 'Angular crystalline tongue with two shard tips at the base.',
-      core: 'White-hot icy core with hard edges.',
-      aura: 'Crisp cold halo — tight blur, sharp falloff.',
-      particles: 'Ice shards that glint and tumble as they rise.',
-      motion: 'Tight brittle flicker — harsh family, small travel.',
-      implementationIntent: 'edge:crystal clip-path on the standard layer stack; particles:shards; aura crisp modifier.',
-    },
   },
   conflagration: {
-    source: BONFIRE_DESIGN_SOURCE, designNumber: '15', designTier: 'rare',
-    tagline: 'Oversized violent crown',
     shape: {
       variant: 'crown', edge: 'round',
       tongues: [
@@ -592,18 +428,8 @@ const PROFILES: Record<FlameId, VisualProfile> = {
     particles: [{ kind: 'sparks', n: 16, color: '#ffb03a', size: 1.2, rise: 1.3 }],
     footprint: 1.3,
     paletteIntent: { glow: '255,120,20' },
-    designRef: {
-      silhouette: 'Five-tongue crown at 1.3× footprint — intentionally oversized.',
-      core: 'Oversized white-gold core in the central tongue.',
-      aura: 'Wide halo plus expanding shock-pulse rings.',
-      particles: 'Dense spark column with high rise.',
-      motion: 'Violent harsh flicker at 0.55× period across all five tongues.',
-      implementationIntent: 'shape:crown (five tongue transforms) + accent:shockPulse + footprint 1.3. Same layer rig.',
-    },
   },
   solfire: {
-    source: BONFIRE_DESIGN_SOURCE, designNumber: '16', designTier: 'rare',
-    tagline: 'A small captive sun',
     shape: { variant: 'solar', edge: 'round', tongues: [{ sx: 0.85, sy: 0.92 }], coreScale: 1.7 },
     motion: { family: 'smooth', speed: 0.9, pulse: 'core' },
     aura: { kind: 'circular' },
@@ -613,36 +439,16 @@ const PROFILES: Record<FlameId, VisualProfile> = {
       { kind: 'motes', n: 5, color: '#ffd24a' },
     ],
     paletteIntent: { glow: '255,200,60' },
-    designRef: {
-      silhouette: 'Compact round body dominated by an oversized core.',
-      core: 'Sun-like core at 1.7× standard ratio — brightest point in the catalog.',
-      aura: 'Circular golden halo plus a crisp solar circle outline.',
-      particles: 'Radiant flare stars with golden motes.',
-      motion: 'Steady core-brightness pulse; calm body.',
-      implementationIntent: 'coreScale token + aura:circular + accent:solarCircle.',
-    },
   },
   voidfire: {
-    source: BONFIRE_DESIGN_SOURCE, designNumber: '17', designTier: 'rare',
-    tagline: 'Dark heart, violet edge',
     shape: { variant: 'inverted', edge: 'sharp', tongues: [{ sx: 0.96, sy: 1.06 }] },
     motion: { family: 'smooth', speed: 1.2 },
     aura: { kind: 'ring' },
     accents: ['voidRing'],
     particles: [{ kind: 'motes', n: 7, color: '#b07aff' }],
     paletteIntent: { invert: true, glow: '150,80,255' },
-    designRef: {
-      silhouette: 'Classic outline, but the center is dark — an inverted reading.',
-      core: 'Near-black void core wrapped in violet light.',
-      aura: 'Hollow ring halo plus two orbiting void rings.',
-      particles: 'Violet motes drawn slowly upward.',
-      motion: 'Slow ominous flicker; rings orbit in opposite directions.',
-      implementationIntent: 'palette:invert token flips the core layer to dark/normal-blend; accent:voidRing ×2.',
-    },
   },
   aurora: {
-    source: BONFIRE_DESIGN_SOURCE, designNumber: '18', designTier: 'rare',
-    tagline: 'Curtains of drifting light',
     shape: {
       variant: 'ribbon', edge: 'round',
       tongues: [
@@ -659,18 +465,8 @@ const PROFILES: Record<FlameId, VisualProfile> = {
       { kind: 'motes', n: 4, color: '#8ae8d8' },
     ],
     paletteIntent: { glow: '80,230,180' },
-    designRef: {
-      silhouette: 'Three flowing ribbon lobes, curtain-like.',
-      core: 'Soft mint core in the center lobe.',
-      aura: 'Drifting aurora band behind the flame; dim wide halo.',
-      particles: 'Slow wisps and pale motes.',
-      motion: 'Lobes wave on offset phases; the whole flame hue-drifts ±20° over 14s.',
-      implementationIntent: 'shape:ribbon (hue-offset tongues + wave modifier) + motion:hueDrift + accent:auroraBand.',
-    },
   },
   phoenix: {
-    source: BONFIRE_DESIGN_SOURCE, designNumber: '19', designTier: 'rare',
-    tagline: 'Wings rising from the core',
     shape: {
       variant: 'wing', edge: 'round',
       tongues: [
@@ -687,18 +483,8 @@ const PROFILES: Record<FlameId, VisualProfile> = {
       { kind: 'ash', n: 6, color: '#8a7e74' },
     ],
     paletteIntent: { glow: '255,150,40' },
-    designRef: {
-      silhouette: 'Center body with two outswept wing tongues rising from the core.',
-      core: 'Tall golden core between the wings.',
-      aura: 'Tall warm halo above the wingspan.',
-      particles: 'Ember-to-ash cycle: bright sparks rise, grey ash falls out high.',
-      motion: 'Slow powerful beat — wings phase slightly behind the body.',
-      implementationIntent: 'shape:wing = ±30° rotated side tongues; two particle defs give the rebirth cycle.',
-    },
   },
   nebula: {
-    source: BONFIRE_DESIGN_SOURCE, designNumber: '20', designTier: 'rare',
-    tagline: 'A cosmos in miniature',
     shape: {
       variant: 'layered', edge: 'round',
       tongues: [
@@ -716,14 +502,6 @@ const PROFILES: Record<FlameId, VisualProfile> = {
     ],
     footprint: 1.2,
     paletteIntent: { glow: '150,100,255' },
-    designRef: {
-      silhouette: 'Layered cosmic body — violet main with teal and gold hue-shifted layers, 1.2× footprint.',
-      core: 'Warm gold core inside a violet shell.',
-      aura: 'Circular halo with slow teal→purple→gold drift, ringed by orbiting motes.',
-      particles: 'Star flecks plus drifting cyan motes.',
-      motion: 'Slowest, richest loop: layered phase offsets + 22s hue drift.',
-      implementationIntent: 'Composition only: layered hue tongues + accents orbitRing/auroraBand + hueDrift. No bespoke code.',
-    },
   },
 };
 

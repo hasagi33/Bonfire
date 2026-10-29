@@ -10,7 +10,6 @@
 import {
   FLAMES,
   BASE_FLAME_ID,
-  BONFIRE_DESIGN_SOURCE,
   DEFAULT_VISUAL_PROFILE,
   flameById,
   safeVisualProfile,
@@ -180,25 +179,17 @@ const EXPECTED: ExpectedProfile[] = [
 function missingProfileParts(p: VisualProfile | undefined): string[] {
   const missing: string[] = [];
   if (!p) return ['visualProfile'];
-  if (p.source !== BONFIRE_DESIGN_SOURCE) missing.push('source');
-  if (!/^\d{2}$/.test(p.designNumber)) missing.push('designNumber');
-  if (p.designTier !== 'common' && p.designTier !== 'rare') missing.push('designTier');
-  if (!p.tagline) missing.push('tagline');
   if (!p.shape?.variant || !p.shape?.edge || !p.shape?.tongues?.length) missing.push('shape');
   if (!p.motion?.family || !(p.motion?.speed > 0)) missing.push('motion');
   if (!Array.isArray(p.particles) || p.particles.length === 0) missing.push('particles');
   if (!p.aura?.kind) missing.push('aura');
   if (!Array.isArray(p.accents)) missing.push('accents');
   if (!p.paletteIntent) missing.push('paletteIntent');
-  const ref = p.designRef;
-  for (const label of ['silhouette', 'core', 'aura', 'particles', 'motion', 'implementationIntent'] as const) {
-    if (!ref?.[label] || ref[label].trim() === '') missing.push(`designRef.${label}`);
-  }
   return missing;
 }
 
 describe('BonfireDesign profile parity (US4)', () => {
-  test('all 20 flames carry a complete BonfireDesign visualProfile with all six designRef labels', () => {
+  test('all 20 flames carry a complete visualProfile', () => {
     for (const f of FLAMES) {
       expect({ id: f.id, missing: missingProfileParts(f.visualProfile) }).toEqual({ id: f.id, missing: [] });
     }
@@ -206,10 +197,6 @@ describe('BonfireDesign profile parity (US4)', () => {
 
   test('catalog order and identity cover BonfireDesign #01..#20 exactly', () => {
     expect(FLAMES.map(f => f.id)).toEqual(EXPECTED.map(e => e.id));
-    FLAMES.forEach((f, i) => {
-      expect(f.visualProfile!.designNumber).toBe(EXPECTED[i].num);
-      expect(f.visualProfile!.designTier).toBe(EXPECTED[i].tier);
-    });
   });
 
   test.each(EXPECTED)('$id matches its BonfireDesign tokens', e => {
@@ -259,13 +246,11 @@ describe('BonfireDesign profile parity (US4)', () => {
     }
   });
 
-  test('the validation helper detects missing tokens and labels (T021)', () => {
+  test('the validation helper detects missing tokens (T021)', () => {
     const broken = JSON.parse(JSON.stringify(flameById('amber').visualProfile)) as VisualProfile;
-    broken.designRef.silhouette = '';
     // @ts-expect-error — deliberately malformed for the negative test
     delete broken.aura;
     const missing = missingProfileParts(broken);
-    expect(missing).toContain('designRef.silhouette');
     expect(missing).toContain('aura');
     expect(missingProfileParts(undefined)).toEqual(['visualProfile']);
   });
