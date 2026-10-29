@@ -6,10 +6,8 @@
  * finger drag) are not deterministically testable in jsdom — gesture-handler
  * runs them natively — so they're validated manually via quickstart scenario 4.
  * What we CAN pin down here:
- *  - the sheet body is wrapped in a GestureDetector whose pan is configured
- *    down-only (`activeOffsetY([-9999, 12])`), the mirror of the full-screen
- *    up-only open pan (`[-12, 9999]`);
- *  - the close path (the pan's onEnd snapping shut) clears the selected day.
+ *  - the full-screen open pan is configured up-only (`[-12, 9999]`);
+ *  - the close path (the header pan's onEnd snapping shut) clears the selected day.
  *
  * To see the gesture configs, this file overrides the global gesture-handler
  * mock with a RECORDING one: every Pan/Tap records its config + handlers so
@@ -111,24 +109,19 @@ function renderSheet(progressValue: number) {
 }
 
 // The pans we care about, identified by their activation config.
-const downOnlyPan = () =>
-  recorded.filter(
-    g => g.kind === 'pan' && JSON.stringify(g.config.activeOffsetY) === '[-9999,12]',
-  );
+const headerPan = () =>
+  recorded.filter(g => g.kind === 'pan' && g.config.activeOffsetY === undefined);
 const upOnlyPan = () =>
   recorded.filter(
     g => g.kind === 'pan' && JSON.stringify(g.config.activeOffsetY) === '[-12,9999]',
   );
 
-test('the open sheet body has a DOWN-only pan, mirroring the up-only open pan (FR-009, FR-010)', () => {
+test('the full-screen open pan is up-only (FR-009)', () => {
   renderSheet(1);
-  // New sheet-body pan: activates only after ~12px of downward travel…
-  expect(downOnlyPan().length).toBeGreaterThan(0);
-  // …while the existing full-screen open pan (up-only) is untouched.
   expect(upOnlyPan().length).toBeGreaterThan(0);
 });
 
-test('closing via the sheet-body pan clears the selected day (FR-010)', () => {
+test('closing via the header pan clears the selected day', () => {
   const { tree, progress } = renderSheet(1);
 
   // Select today in the month grid (its cell reads "not yet logged").
@@ -143,9 +136,9 @@ test('closing via the sheet-body pan clears the selected day (FR-010)', () => {
   });
   expect(todayCell.props.accessibilityState.selected).toBe(true);
 
-  // Drive the body pan's end with a hard downward flick: the snap rule closes
+  // Drive the header pan's end with a hard downward flick: the snap rule closes
   // the sheet (mocked withTiming resolves immediately) and clears `selected`.
-  const pan = downOnlyPan().at(-1)!;
+  const pan = headerPan().at(-1)!;
   act(() => {
     pan.handlers.onBegin?.({});
     pan.handlers.onEnd?.({ velocityY: 1200, translationY: 200 });
@@ -163,7 +156,7 @@ test('closing via the sheet-body pan clears the selected day (FR-010)', () => {
 
 test('pan updates clamp progress so fast swipes cannot place the sheet off-screen', () => {
   const { progress } = renderSheet(1);
-  const pan = downOnlyPan().at(-1)!;
+  const pan = headerPan().at(-1)!;
 
   act(() => {
     pan.handlers.onBegin?.({});

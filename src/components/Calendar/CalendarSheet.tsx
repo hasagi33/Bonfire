@@ -9,17 +9,14 @@
  * Interaction (gesture-handler Pan + Reanimated):
  *  - swipe up ANYWHERE on the closed screen (a full-screen "status-bar-shade"
  *    pull, FR-025) or drag/tap the bottom handle → open;
- *  - swipe DOWN anywhere on the open sheet's body (month grid, picker bar,
- *    header — 003 US4, FR-010) / drag the header / tap the scrim area → close.
+ *  - drag the header down / tap the scrim area → close.
  *  - `progress` (0 closed → 1 open) is a SHARED value owned by the parent so the
  *    flame can lift/dim in lock-step (see BonfireScreen → Flame `lift`).
  *
  * The full-screen pull activates ONLY on upward movement (activeOffsetY), so
  * plain taps still reach the settings gear / dev pill (they sit above it via
- * zIndex) and never accidentally open the calendar. The sheet-body pan is its
- * mirror image: it activates only after ~12px of DOWNWARD travel, so day-cell
- * taps, score buttons and month-nav arrows keep resolving as plain taps and
- * never get stolen by the pan (FR-011).
+ * zIndex) and never accidentally open the calendar. Day-cell taps, score
+ * buttons and month-nav arrows inside the sheet are plain taps (FR-011).
  */
 
 /* eslint-disable react-hooks/immutability --
@@ -134,14 +131,6 @@ function CalendarSheet({
     [makePan],
   );
 
-  // Down-only pan over the OPEN sheet's body (003 US4, FR-010): the mirror
-  // image of the full-screen up-pan. Activates only after ~12px of downward
-  // travel, and `makePan`'s onEnd already snaps + clears the selected day on
-  // close — so a downward drag anywhere on the calendar dismisses it.
-  const sheetPan = useMemo(
-    () => makePan().activeOffsetY([-9999, 12]),
-    [makePan],
-  );
   const overlayTap = useMemo(() => Gesture.Tap().onEnd(() => {
     if (clamp01(progress.value) > 0.5) {
       cancelAnimation(progress);
@@ -201,40 +190,37 @@ function CalendarSheet({
         </Animated.View>
       </GestureDetector>
 
-      {/* the sheet itself — its whole body doubles as a swipe-down-to-close
-          surface (the header keeps its own immediate drag gesture inside) */}
-      <GestureDetector gesture={sheetPan}>
-        <Animated.View style={[styles.sheet, { height: sheetH }, sheetStyle]}>
-          <GestureDetector gesture={headerPan}>
-            <View
-              style={styles.grabHeader}
-              accessibilityLabel="Drag to close calendar"
-            >
-              <View style={styles.grab} />
-            </View>
-          </GestureDetector>
+      {/* the sheet itself — drag the header to close */}
+      <Animated.View style={[styles.sheet, { height: sheetH }, sheetStyle]}>
+        <GestureDetector gesture={headerPan}>
+          <View
+            style={styles.grabHeader}
+            accessibilityLabel="Drag to close calendar"
+          >
+            <View style={styles.grab} />
+          </View>
+        </GestureDetector>
 
-          <MonthGrid
-            today={today}
-            entries={entries}
-            fireHealth={fireHealth}
-            selectedDate={selectedDate}
-            onSelectDay={onSelectDate}
-          />
+        <MonthGrid
+          today={today}
+          entries={entries}
+          fireHealth={fireHealth}
+          selectedDate={selectedDate}
+          onSelectDay={onSelectDate}
+        />
 
-          <ScorePickerBar
-            dateKey={selectedDate}
-            currentScore={selectedDate ? entries[selectedDate] : undefined}
-            noteDraft={noteDraft}
-            onNoteChange={onNoteChange}
-            onChoose={score => {
-              if (selectedDate) onSet(selectedDate, score);
-              onSelectDate(null);
-            }}
-            onClear={() => onSelectDate(null)}
-          />
-        </Animated.View>
-      </GestureDetector>
+        <ScorePickerBar
+          dateKey={selectedDate}
+          currentScore={selectedDate ? entries[selectedDate] : undefined}
+          noteDraft={noteDraft}
+          onNoteChange={onNoteChange}
+          onChoose={score => {
+            if (selectedDate) onSet(selectedDate, score);
+            onSelectDate(null);
+          }}
+          onClear={() => onSelectDate(null)}
+        />
+      </Animated.View>
     </View>
   );
 }
