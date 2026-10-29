@@ -14,7 +14,7 @@
  * changing flames can't drop frames.
  */
 
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import type { DateKey } from '../domain/dates';
 import type { Entries, FireState } from '../domain/fire';
 import { evaluateAll, type AchievementState } from '../domain/achievements';
@@ -46,21 +46,7 @@ export function useFlames(
     [entries, today, fireState, fireStrength],
   );
 
-  // Unlock feedback (FR-023): compare this evaluation's unlocked set against the
-  // previous one using React's "state from previous renders" pattern (setState
-  // during render — sanctioned for exactly this). Nothing is persisted, and the
-  // first evaluation reports nothing, so an already-earned flame doesn't
-  // "celebrate" on every app start.
-  const unlockedNow = useMemo(
-    () => new Set<FlameId>(Object.values(states).filter(s => s.unlocked).map(s => s.flameId)),
-    [states],
-  );
-  const [prevUnlocked, setPrevUnlocked] = useState(unlockedNow);
-  const [newlyUnlocked, setNewlyUnlocked] = useState<FlameId[]>([]);
-  if (unlockedNow !== prevUnlocked) {
-    setPrevUnlocked(unlockedNow);
-    setNewlyUnlocked([...unlockedNow].filter(id => !prevUnlocked.has(id)));
-  }
+  const newlyUnlocked = useMemo<FlameId[]>(() => [], []);
 
   // Selecting a flame is a cheap lookup; resolving + render values are memoized
   // so a flame switch is just a palette swap (no catalog re-evaluation).
