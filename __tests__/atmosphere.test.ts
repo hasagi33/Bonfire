@@ -19,17 +19,16 @@ test('derives daytime, dusk, and night from local time with screenshot-friendly 
   expect(day.phase).toBe('day');
   expect(day.brightness).toBeGreaterThan(0.75);
   expect(dusk.phase).toBe('dusk');
-  expect(dusk.warmth).toBeGreaterThan(day.warmth);
   expect(night.phase).toBe('night');
   expect(night.brightness).toBeLessThan(0.3);
 });
 
-test('keeps dawn cooler than dusk while still reading as morning', () => {
+test('reads as morning with a bright, warm sunrise', () => {
   const morning = deriveAtmosphere({ date: localDate(6, 15, 5), timeZone: 'America/New_York' });
   const dusk = deriveAtmosphere({ date: localDate(6, 15, 20), timeZone: 'America/New_York' });
 
   expect(morning.phase).toBe('morning');
-  expect(morning.warmth).toBeLessThan(dusk.warmth);
+  expect(morning.warmth).toBeGreaterThan(dusk.warmth);
   expect(morning.brightness).toBeGreaterThan(0.55);
 });
 

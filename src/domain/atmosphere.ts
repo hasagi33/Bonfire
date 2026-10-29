@@ -129,11 +129,11 @@ function phaseForHour(hour: number, lightSpan: number): AtmospherePhase {
 function toneForPhase(phase: AtmospherePhase): { brightness: number; warmth: number } {
   switch (phase) {
     case 'morning':
-      return { brightness: 0.62, warmth: 0.34 };
+      return { brightness: 0.62, warmth: 0.76 };
     case 'day':
       return { brightness: 0.86, warmth: 0.48 };
     case 'dusk':
-      return { brightness: 0.48, warmth: 0.76 };
+      return { brightness: 0.48, warmth: 0.34 };
     case 'night':
       return { brightness: 0.18, warmth: 0.28 };
   }

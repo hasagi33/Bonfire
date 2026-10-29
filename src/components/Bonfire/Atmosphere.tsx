@@ -26,9 +26,9 @@ interface AtmospherePalette {
 
 const PALETTES: Record<AtmosphericState['phase'], AtmospherePalette> = {
   morning: {
-    base: ['#1f1a2f', '#4b3a54', bg1],
-    horizon: ['rgba(255,204,141,0.32)', 'rgba(210,118,82,0.15)', 'transparent'],
-    veil: 'rgba(255,214,165,0.045)',
+    base: ['#221522', '#5a2d34', bg1],
+    horizon: ['rgba(255,154,92,0.38)', 'rgba(147,72,74,0.22)', 'transparent'],
+    veil: 'rgba(255,129,58,0.055)',
   },
   day: {
     base: ['#48384f', '#80696f', '#2a2033'],
@@ -36,9 +36,9 @@ const PALETTES: Record<AtmosphericState['phase'], AtmospherePalette> = {
     veil: 'rgba(255,232,202,0.075)',
   },
   dusk: {
-    base: ['#221522', '#5a2d34', bg1],
-    horizon: ['rgba(255,154,92,0.38)', 'rgba(147,72,74,0.22)', 'transparent'],
-    veil: 'rgba(255,129,58,0.055)',
+    base: ['#1f1a2f', '#4b3a54', bg1],
+    horizon: ['rgba(255,204,141,0.32)', 'rgba(210,118,82,0.15)', 'transparent'],
+    veil: 'rgba(255,214,165,0.045)',
   },
   night: {
     base: ['#090711', '#1c1224', bg0],
