@@ -38,7 +38,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import type { Score } from '../../domain/fire';
 import type { Entries } from '../../domain/fire';
-import type { FireHealthState } from '../../domain/fireHealth';
+import type { FireHealthState } from '../Bonfire/emberMood';
 import type { DateKey } from '../../domain/dates';
 import MonthGrid from './MonthGrid';
 import ScorePickerBar from './ScorePickerBar';

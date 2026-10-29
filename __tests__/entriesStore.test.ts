@@ -6,7 +6,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { loadEntries, saveEntries } from '../src/data/entriesStore';
 import { computeFire } from '../src/domain/fire';
-import { deriveFireHealth } from '../src/domain/fireHealth';
+import { readEmberMood } from '../src/components/Bonfire/emberMood';
 
 const STORAGE_KEY = 'bonfire.entries.v1';
 
@@ -43,7 +43,7 @@ test('Fire Health derivation does not persist or mutate score entries', async ()
   await saveEntries({ ...entries });
 
   const loaded = await loadEntries();
-  deriveFireHealth(loaded, computeFire(loaded, '2026-06-15'), '2026-06-15');
+  readEmberMood(loaded, computeFire(loaded, '2026-06-15'), '2026-06-15');
 
   expect(await loadEntries()).toEqual(entries);
   expect(await AsyncStorage.getItem(STORAGE_KEY)).toBe(JSON.stringify(entries));

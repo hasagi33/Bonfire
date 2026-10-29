@@ -7,10 +7,10 @@
 import { addDays } from '../src/domain/dates';
 import { computeFire, type Entries, type Score } from '../src/domain/fire';
 import {
-  deriveFireHealth,
+  readEmberMood,
   fireHealthSamples,
   fireHealthVisualModifiers,
-} from '../src/domain/fireHealth';
+} from '../src/components/Bonfire/emberMood';
 
 const TODAY = '2026-06-15';
 const day = (offset: number): string => addDays(TODAY, offset);
@@ -72,7 +72,7 @@ test('drops corrupt non-integer scores from the health window', () => {
 });
 
 test('defaults to Steady for sparse histories with fewer than 3 scored days', () => {
-  const health = deriveFireHealth(build([[0, 5]]), litFire, addDays(TODAY, 1));
+  const health = readEmberMood(build([[0, 5]]), litFire, addDays(TODAY, 1));
   expect(health).toMatchObject({
     name: 'steady',
     label: 'Steady',
@@ -83,19 +83,19 @@ test('defaults to Steady for sparse histories with fewer than 3 scored days', ()
 });
 
 test('maps weighted quality into Faint, Steady, and Bright', () => {
-  expect(deriveFireHealth(build([[-2, 1], [-1, 1], [0, 2]]), litFire, addDays(TODAY, 1)).name).toBe('faint');
-  expect(deriveFireHealth(build([[-2, 2], [-1, 3], [0, 3]]), litFire, addDays(TODAY, 1)).name).toBe('steady');
-  expect(deriveFireHealth(build([[-2, 3], [-1, 3], [0, 4]]), litFire, addDays(TODAY, 1)).name).toBe('bright');
-  expect(deriveFireHealth(build([[-2, 4], [-1, 4], [0, 5]]), litFire, addDays(TODAY, 1)).name).toBe('bright');
+  expect(readEmberMood(build([[-2, 1], [-1, 1], [0, 2]]), litFire, addDays(TODAY, 1)).name).toBe('faint');
+  expect(readEmberMood(build([[-2, 2], [-1, 3], [0, 3]]), litFire, addDays(TODAY, 1)).name).toBe('steady');
+  expect(readEmberMood(build([[-2, 3], [-1, 3], [0, 4]]), litFire, addDays(TODAY, 1)).name).toBe('bright');
+  expect(readEmberMood(build([[-2, 4], [-1, 4], [0, 5]]), litFire, addDays(TODAY, 1)).name).toBe('bright');
 });
 
 test('newer high scores outweigh older low scores inside the 7-score window', () => {
-  const improving = deriveFireHealth(
+  const improving = readEmberMood(
     build([[-6, 1], [-5, 1], [-4, 2], [-3, 3], [-2, 4], [-1, 5], [0, 5]]),
     litFire,
     addDays(TODAY, 1),
   );
-  const fading = deriveFireHealth(
+  const fading = readEmberMood(
     build([[-6, 5], [-5, 5], [-4, 4], [-3, 3], [-2, 2], [-1, 1], [0, 1]]),
     litFire,
     addDays(TODAY, 1),
@@ -108,7 +108,7 @@ test('newer high scores outweigh older low scores inside the 7-score window', ()
 
 test('suppresses visibility and returns neutral visual modifiers when fire is out', () => {
   const outFire = computeFire(build([[-4, 5]]), TODAY);
-  const health = deriveFireHealth(build([[-6, 5], [-5, 5], [-4, 5], [-3, 5]]), outFire, TODAY);
+  const health = readEmberMood(build([[-6, 5], [-5, 5], [-4, 5], [-3, 5]]), outFire, TODAY);
 
   expect(outFire.state).toBe('out');
   expect(health.visible).toBe(false);

@@ -60,7 +60,7 @@ import {
   type SharedValue,
 } from 'react-native-reanimated';
 import type { FireState } from '../../domain/fire';
-import type { FireHealthState } from '../../domain/fireHealth';
+import type { FireHealthState } from './emberMood';
 import type { FlameStyle } from '../../domain/flames';
 import type { FlamePulseState } from '../../domain/flamePulses';
 import { darken, withAlpha, type Palette } from '../../theme/palettes';

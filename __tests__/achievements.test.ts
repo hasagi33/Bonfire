@@ -10,7 +10,7 @@ import { computeMetrics } from '../src/domain/fireMetrics';
 import { evaluateFlame, evaluateAll } from '../src/domain/achievements';
 import { FLAMES, flameById } from '../src/domain/flames';
 import { addDays } from '../src/domain/dates';
-import { deriveFireHealth } from '../src/domain/fireHealth';
+import { readEmberMood } from '../src/components/Bonfire/emberMood';
 
 const TODAY = '2026-06-15';
 const day = (o: number): string => addDays(TODAY, o);
@@ -252,7 +252,7 @@ test('Fire Health derivation does not change unlock outcomes', () => {
   const fire = computeFire(entries, TODAY);
   const before = evaluateAll(FLAMES, entries, TODAY, fire);
 
-  deriveFireHealth(entries, fire, TODAY);
+  readEmberMood(entries, fire, TODAY);
 
   expect(evaluateAll(FLAMES, entries, TODAY, fire)).toEqual(before);
 });

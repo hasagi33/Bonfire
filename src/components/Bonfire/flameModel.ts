@@ -19,7 +19,7 @@
  */
 
 import type { FireState } from '../../domain/fire';
-import { fireHealthVisualModifiers, type FireHealthState } from '../../domain/fireHealth';
+import { fireHealthVisualModifiers, type FireHealthState } from './emberMood';
 import {
   safeVisualProfile,
   type AccentProfile,

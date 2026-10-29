@@ -44,7 +44,7 @@ import CalendarSheet from '../components/Calendar/CalendarSheet';
 import SettingsSheet from '../components/Settings/SettingsSheet';
 import { deriveAtmosphere } from '../domain/atmosphere';
 import { todayKey, type DateKey } from '../domain/dates';
-import { deriveFireHealth } from '../domain/fireHealth';
+import { readEmberMood } from '../components/Bonfire/emberMood';
 import { BASE_FLAME_ID, type FlameId } from '../domain/flames';
 import { useEntries } from '../hooks/useEntries';
 import { useDayNotes } from '../hooks/useDayNotes';
@@ -97,7 +97,7 @@ function BonfireScreen() {
   // Fire Health intentionally lags one day: today's score can affect gameplay
   // immediately, but the visual health window ends yesterday inside the helper.
   const fireHealth = useMemo(
-    () => deriveFireHealth(entries, fire, today),
+    () => readEmberMood(entries, fire, today),
     [entries, fire, today],
   );
   const sceneWidth = sceneSize.width || width;

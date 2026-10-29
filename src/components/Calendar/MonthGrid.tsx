@@ -9,7 +9,7 @@
 import React, { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { classifyDay, type Entries, type Score } from '../../domain/fire';
-import type { FireHealthState } from '../../domain/fireHealth';
+import type { FireHealthState } from '../Bonfire/emberMood';
 import { monthGrid, parseYmd, type DateKey } from '../../domain/dates';
 import { amber, ink, inkDim, inkFaint, line } from '../../theme/tokens';
 import DayCell from './DayCell';

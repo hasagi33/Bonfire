@@ -1,13 +1,13 @@
 /**
- * fireHealth.ts — pure Fire Health derivation for the bonfire scene.
+ * emberMood.ts — pure Fire Health derivation for the bonfire scene.
  *
  * Input is the existing score history plus current fire state. Output is a
  * bounded, visual-only health state for rendering. This module never writes to
  * storage and never feeds back into streak survival, strength, or unlock math.
  */
 
-import { addDays, type DateKey } from './dates';
-import { isScore, type Entries, type FireState, type Score } from './fire';
+import { addDays, type DateKey } from '../../domain/dates';
+import { isScore, type Entries, type FireState, type Score } from '../../domain/fire';
 
 export const FIRE_HEALTH_WINDOW_SIZE = 7;
 export const FIRE_HEALTH_MIN_SAMPLES = 3;
@@ -109,7 +109,7 @@ export function fireHealthSamples(entries: Entries, today: DateKey): FireHealthS
  * Derive one of Faint/Steady/Bright/Radiant from recent score quality.
  * Sparse histories default to Steady to avoid noisy early extremes.
  */
-export function deriveFireHealth(
+export function readEmberMood(
   entries: Entries,
   fire: FireState,
   today: DateKey,

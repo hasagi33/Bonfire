@@ -9,7 +9,7 @@
 import { computeMetrics } from '../src/domain/fireMetrics';
 import { addDays } from '../src/domain/dates';
 import { computeFire, type Entries, type Score } from '../src/domain/fire';
-import { deriveFireHealth } from '../src/domain/fireHealth';
+import { readEmberMood } from '../src/components/Bonfire/emberMood';
 
 const TODAY = '2026-06-15';
 const day = (offset: number): string => addDays(TODAY, offset);
@@ -115,7 +115,7 @@ test('Fire Health derivation does not alter run metrics', () => {
   ]);
   const before = computeMetrics(entries, TODAY);
 
-  deriveFireHealth(entries, computeFire(entries, TODAY), TODAY);
+  readEmberMood(entries, computeFire(entries, TODAY), TODAY);
 
   expect(computeMetrics(entries, TODAY)).toEqual(before);
 });
