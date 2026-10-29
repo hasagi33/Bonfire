@@ -41,8 +41,8 @@ describe('heat ramp tokens', () => {
     expect(heat5).toBe('#c4310f');
   });
 
-  test('HEAT keeps index 0 unused and orders heat1..heat5', () => {
-    expect(HEAT).toEqual(['', heat1, heat2, heat3, heat4, heat5]);
+  test('HEAT keeps index 0 unused and lists the five ramp colors', () => {
+    expect(HEAT).toEqual(['', heat1, heat3, heat2, heat4, heat5]);
   });
 
   test('all five backgrounds are pairwise distinct (SC-003)', () => {

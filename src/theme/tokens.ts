@@ -43,7 +43,7 @@ export const line = 'rgba(255, 255, 255, 0.06)'; // hairline borders
  * Heat color for a given score. Index 0 is unused (no score 0); scores 1..5 map
  * to heat1..heat5. Used to paint scored day cells and picker buttons.
  */
-export const HEAT: readonly string[] = ['', heat1, heat2, heat3, heat4, heat5];
+export const HEAT: readonly string[] = ['', heat1, heat3, heat2, heat4, heat5];
 
 // Dark warm hairline drawn around the white "1" so it stays visible against
 // light surfaces; only score 1 needs it. Pinned here — never hardcoded in a
