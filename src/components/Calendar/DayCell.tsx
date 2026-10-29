@@ -3,8 +3,7 @@
  *
  * Mirrors `styles.css .cell` and its variants:
  *  - blank  : padding cell outside the month (invisible).
- *  - future : after today — dimmed, not tappable.
- *  - missed : past, unscored — faint, with a small hollow dot.
+ *  - future / missed : dimmed (future days are not tappable).
  *  - today  : unscored today — amber ring.
  *  - scored : a 1–5 day — warm heat fill, dark number, and a row of "pip" dots.
  * A scored day that is also today additionally gets the bright ring.
@@ -50,8 +49,7 @@ function DayCell({ dateKey, dayNumber, kind, score, isToday, selected, onPress }
         <View
           style={[
             styles.real,
-            kind === 'future' && styles.future,
-            kind === 'missed' && styles.missed,
+            (kind === 'future' || kind === 'missed') && styles.future,
             isToday && styles.today,
             scored && { backgroundColor: heat!.background, borderWidth: 0 },
             // the white "1" day keeps a token-defined hairline so it doesn't
@@ -64,16 +62,12 @@ function DayCell({ dateKey, dayNumber, kind, score, isToday, selected, onPress }
           <Text
             style={[
               styles.num,
-              kind === 'future' && styles.numFuture,
-              kind === 'missed' && styles.numMissed,
+              (kind === 'future' || kind === 'missed') && styles.numFuture,
               isToday && !scored && styles.numToday,
               scored && { color: heat!.color },
             ]}>
             {dayNumber}
           </Text>
-
-          {/* hollow dot under a missed day */}
-          {kind === 'missed' && <View style={styles.missedDot} />}
 
           {/* heat pips under a scored day (one per point) */}
           {scored && (
@@ -115,24 +109,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   future: { opacity: 0.4, backgroundColor: 'rgba(255,255,255,0.015)' },
-  missed: { backgroundColor: 'rgba(255,255,255,0.02)', borderColor: 'rgba(255,255,255,0.04)' },
   today: { borderColor: amber },
   scoredToday: { borderWidth: 2, borderColor: core },
   selected: { borderWidth: 2, borderColor: core },
   pressed: { transform: [{ scale: 0.9 }] },
   num: { fontSize: 13.5, fontWeight: '600', color: inkDim },
   numFuture: { color: inkFaint },
-  numMissed: { color: inkFaint },
   numToday: { color: gold },
-  missedDot: {
-    position: 'absolute',
-    bottom: 6,
-    width: 5,
-    height: 5,
-    borderRadius: 3,
-    borderWidth: 1.4,
-    borderColor: 'rgba(120,130,150,0.45)',
-  },
   pips: {
     position: 'absolute',
     bottom: 5,
