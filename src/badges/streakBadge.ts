@@ -4,13 +4,6 @@
 
 export type BadgeMode = 'compact' | 'full' | 'muted';
 
-function legacyBadgeLabel(days: number): string {
-  if (days <= 0) {
-    return 'none';
-  }
-  return days > 30 ? 'legend' : 'starter';
-}
-
 export function streakBadge(days: number, best: number, mode: BadgeMode, paused: boolean): string {
   let label = '';
   if (paused && days > 0) {
