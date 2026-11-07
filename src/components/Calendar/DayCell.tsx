@@ -29,6 +29,73 @@ interface DayCellProps {
   onPress?: (dateKey: string) => void;
 }
 
+/**
+ * Builds the style array for the visible square.
+ * Returns the container styles that depend on the day's kind, today flag,
+ * selection, press state, and heat palette (for scored days).
+ */
+function cellContainerStyle(
+  kind: DayKind,
+  scored: boolean,
+  heat: ReturnType<typeof heatStyle> | undefined,
+  isToday: boolean | undefined,
+  selected: boolean | undefined,
+  pressed: boolean,
+  tappable: boolean,
+) {
+  return [
+    styles.real,
+    kind === 'future' && styles.future,
+    kind === 'missed' && styles.missed,
+    isToday && styles.today,
+    scored && { backgroundColor: heat!.background, borderWidth: 0 },
+    // the white "1" day keeps a token-defined hairline so it doesn't
+    // read as an empty cell (today/selected rings below still win)
+    scored && heat!.border !== undefined && { borderWidth: 1.4, borderColor: heat!.border },
+    scored && isToday && styles.scoredToday,
+    selected && styles.selected,
+    pressed && tappable && styles.pressed,
+  ];
+}
+
+/**
+ * Builds the style array for the day-of-month number text.
+ */
+function numberTextStyle(
+  kind: DayKind,
+  scored: boolean,
+  heat: ReturnType<typeof heatStyle> | undefined,
+  isToday: boolean | undefined,
+) {
+  return [
+    styles.num,
+    kind === 'future' && styles.numFuture,
+    kind === 'missed' && styles.numMissed,
+    isToday && !scored && styles.numToday,
+    scored && { color: heat!.color },
+  ];
+}
+
+/**
+ * Renders the decorative indicators under the number:
+ * a hollow dot for missed days, or heat pips (one per point) for scored days.
+ */
+function renderIndicators(kind: DayKind, scored: boolean, score: Score | undefined) {
+  if (kind === 'missed') {
+    return <View style={styles.missedDot} />;
+  }
+  if (!scored) {
+    return null;
+  }
+  return (
+    <View style={styles.pips}>
+      {Array.from({ length: score as number }).map((_, i) => (
+        <View key={i} style={styles.pip} />
+      ))}
+    </View>
+  );
+}
+
 function DayCell({ dateKey, dayNumber, kind, score, isToday, selected, onPress }: DayCellProps) {
   if (dateKey === null || kind === null) {
     return <View style={styles.cell} />; // blank padding
@@ -47,42 +114,9 @@ function DayCell({ dateKey, dayNumber, kind, score, isToday, selected, onPress }
       accessibilityState={{ disabled: !tappable, selected }}
       accessibilityLabel={accessibilityLabel(dateKey, kind, score)}>
       {({ pressed }) => (
-        <View
-          style={[
-            styles.real,
-            kind === 'future' && styles.future,
-            kind === 'missed' && styles.missed,
-            isToday && styles.today,
-            scored && { backgroundColor: heat!.background, borderWidth: 0 },
-            // the white "1" day keeps a token-defined hairline so it doesn't
-            // read as an empty cell (today/selected rings below still win)
-            scored && heat!.border !== undefined && { borderWidth: 1.4, borderColor: heat!.border },
-            scored && isToday && styles.scoredToday,
-            selected && styles.selected,
-            pressed && tappable && styles.pressed,
-          ]}>
-          <Text
-            style={[
-              styles.num,
-              kind === 'future' && styles.numFuture,
-              kind === 'missed' && styles.numMissed,
-              isToday && !scored && styles.numToday,
-              scored && { color: heat!.color },
-            ]}>
-            {dayNumber}
-          </Text>
-
-          {/* hollow dot under a missed day */}
-          {kind === 'missed' && <View style={styles.missedDot} />}
-
-          {/* heat pips under a scored day (one per point) */}
-          {scored && (
-            <View style={styles.pips}>
-              {Array.from({ length: score as number }).map((_, i) => (
-                <View key={i} style={styles.pip} />
-              ))}
-            </View>
-          )}
+        <View style={cellContainerStyle(kind, scored, heat, isToday, selected, pressed, tappable)}>
+          <Text style={numberTextStyle(kind, scored, heat, isToday)}>{dayNumber}</Text>
+          {renderIndicators(kind, scored, score)}
         </View>
       )}
     </Pressable>
