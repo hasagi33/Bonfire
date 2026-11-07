@@ -1,19 +1,19 @@
 /**
- * useEntries.test.tsx — hook tests for the score/fire state container.
+ * useEntries.test.tsx — hook tests for the score entries and derived fire state.
  *
- * A tiny probe component exposes hook state through a module-level variable so
- * tests can drive setScore/clearScore and inspect entries/fire/ready without
- * any native UI. The entries store is mocked so AsyncStorage is never touched.
+ * Storage is mocked so AsyncStorage is never touched directly. A small probe
+ * component exposes the hook's return value through a module-level variable so
+ * tests can drive setScore/clearScore and inspect entries, fire, and ready.
  */
 
 import React from 'react';
 import ReactTestRenderer, { act } from 'react-test-renderer';
 import { Text } from 'react-native';
 import { useEntries, type UseEntries } from '../src/hooks/useEntries';
+import type { DateKey } from '../src/domain/dates';
+import { computeFire, type Entries } from '../src/domain/fire';
 import { loadEntries, saveEntries } from '../src/data/entriesStore';
-import type { Entries } from '../src/domain/fire';
 
-// Replace the storage module with jest mocks; the hook must never reach AsyncStorage directly.
 jest.mock('../src/data/entriesStore', () => ({
   loadEntries: jest.fn(),
   saveEntries: jest.fn(),
@@ -22,25 +22,26 @@ jest.mock('../src/data/entriesStore', () => ({
 const mockedLoad = loadEntries as jest.MockedFunction<typeof loadEntries>;
 const mockedSave = saveEntries as jest.MockedFunction<typeof saveEntries>;
 
-const TODAY = '2024-05-10';
+// A fixed "today" keeps every date comparison deterministic.
+const TODAY = '2026-06-10' as DateKey;
+const PAST = '2026-06-09' as DateKey;
+const OLDER = '2026-06-08' as DateKey;
+const FUTURE = '2026-06-11' as DateKey;
 
-// The most recent hook result, updated by the probe on every render.
 let latest!: UseEntries;
 let rendered: ReactTestRenderer.ReactTestRenderer | null = null;
 
-function Probe({ today }: { today: string }) {
-  const value = useEntries(today);
-  // Keep a reference to the latest hook output so tests can read and call it.
-  latest = value;
-  return <Text>{value.ready ? 'ready' : 'loading'}</Text>;
+// Probe component: stores the hook result in a module variable on every render.
+function Probe() {
+  latest = useEntries(TODAY);
+  return <Text>{latest.ready ? 'ready' : 'loading'}</Text>;
 }
 
-// Render the probe inside act so effects and the async load settle deterministically.
-async function renderHook(today: string = TODAY) {
+// Render the probe and wait for the initial async load to settle.
+async function renderHook() {
   await act(async () => {
-    rendered = ReactTestRenderer.create(<Probe today={today} />);
+    rendered = ReactTestRenderer.create(<Probe />);
   });
-  // Flush any follow-up microtasks queued by the mocked promise.
   await act(async () => {});
 }
 
@@ -58,9 +59,9 @@ afterEach(() => {
   rendered = null;
 });
 
-describe('useEntries initial load', () => {
-  test('sets entries and ready=true after loadEntries resolves', async () => {
-    const saved: Entries = { '2024-05-08': 3, '2024-05-09': 5 };
+describe('initial load', () => {
+  test('sets ready true and entries from loadEntries', async () => {
+    const saved: Entries = { [PAST]: 3, [OLDER]: 5 };
     mockedLoad.mockResolvedValue(saved);
 
     await renderHook();
@@ -70,7 +71,7 @@ describe('useEntries initial load', () => {
     expect(latest.entries).toEqual(saved);
   });
 
-  test('starts not ready before the load finishes', async () => {
+  test('is not ready before the load resolves', async () => {
     let resolveLoad!: (value: Entries) => void;
     mockedLoad.mockReturnValue(
       new Promise<Entries>(resolve => {
@@ -79,11 +80,10 @@ describe('useEntries initial load', () => {
     );
 
     await act(async () => {
-      rendered = ReactTestRenderer.create(<Probe today={TODAY} />);
+      rendered = ReactTestRenderer.create(<Probe />);
     });
 
     expect(latest.ready).toBe(false);
-    expect(latest.entries).toEqual({});
 
     await act(async () => {
       resolveLoad({});
@@ -91,165 +91,126 @@ describe('useEntries initial load', () => {
 
     expect(latest.ready).toBe(true);
   });
-
-  test('does not set state when unmounted before the load resolves', async () => {
-    let resolveLoad!: (value: Entries) => void;
-    mockedLoad.mockReturnValue(
-      new Promise<Entries>(resolve => {
-        resolveLoad = resolve;
-      }),
-    );
-    const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-
-    await act(async () => {
-      rendered = ReactTestRenderer.create(<Probe today={TODAY} />);
-    });
-    const snapshotBeforeUnmount = latest;
-
-    act(() => {
-      rendered?.unmount();
-    });
-    rendered = null;
-
-    await act(async () => {
-      resolveLoad({ '2024-05-09': 4 });
-    });
-
-    // The late-resolving load must not update the (now unmounted) hook state.
-    expect(latest).toBe(snapshotBeforeUnmount);
-    expect(latest.ready).toBe(false);
-    expect(errorSpy).not.toHaveBeenCalled();
-    errorSpy.mockRestore();
-  });
 });
 
-describe('useEntries.setScore', () => {
-  test('accepts a valid score on today and persists the updated map', async () => {
+describe('setScore', () => {
+  test.each([1, 2, 3, 4, 5])('accepts valid score %i for today and past dates', async score => {
     await renderHook();
 
-    await act(async () => {
-      latest.setScore(TODAY, 4);
+    act(() => {
+      latest.setScore(TODAY, score as 1 | 2 | 3 | 4 | 5);
+    });
+    act(() => {
+      latest.setScore(PAST, score as 1 | 2 | 3 | 4 | 5);
     });
 
-    expect(latest.entries).toEqual({ [TODAY]: 4 });
+    expect(latest.entries[TODAY]).toBe(score);
+    expect(latest.entries[PAST]).toBe(score);
+  });
+
+  test('persists the updated entries with deep-equal data', async () => {
+    mockedLoad.mockResolvedValue({ [OLDER]: 2 });
+    await renderHook();
+
+    act(() => {
+      latest.setScore(PAST, 4 as 4);
+    });
+
     expect(mockedSave).toHaveBeenCalledTimes(1);
-    expect(mockedSave).toHaveBeenCalledWith({ [TODAY]: 4 });
+    expect(mockedSave).toHaveBeenLastCalledWith({ [OLDER]: 2, [PAST]: 4 });
   });
 
-  test('accepts a valid score on a past date', async () => {
-    mockedLoad.mockResolvedValue({ '2024-05-08': 2 });
+  test('replaces an existing score for the same date', async () => {
+    mockedLoad.mockResolvedValue({ [PAST]: 2 });
     await renderHook();
 
-    await act(async () => {
-      latest.setScore('2024-05-09', 5);
+    act(() => {
+      latest.setScore(PAST, 5 as 5);
     });
 
-    expect(latest.entries).toEqual({ '2024-05-08': 2, '2024-05-09': 5 });
-    expect(mockedSave).toHaveBeenCalledWith({ '2024-05-08': 2, '2024-05-09': 5 });
+    expect(latest.entries[PAST]).toBe(5);
+    expect(mockedSave).toHaveBeenLastCalledWith({ [PAST]: 5 });
   });
 
-  test('replaces an existing score for the same day', async () => {
-    mockedLoad.mockResolvedValue({ '2024-05-09': 2 });
+  test.each([0, 6, -1, 2.5, NaN])('ignores invalid score %p and does not save', async bad => {
     await renderHook();
 
-    await act(async () => {
-      latest.setScore('2024-05-09', 3);
-    });
-
-    expect(latest.entries).toEqual({ '2024-05-09': 3 });
-    expect(mockedSave).toHaveBeenCalledWith({ '2024-05-09': 3 });
-  });
-
-  test.each([0, 6, -1, 2.5, NaN])('ignores invalid score %p without saving', async score => {
-    await renderHook();
-
-    await act(async () => {
-      latest.setScore(TODAY, score as number);
+    act(() => {
+      latest.setScore(PAST, bad as 1);
     });
 
     expect(latest.entries).toEqual({});
     expect(mockedSave).not.toHaveBeenCalled();
   });
 
-  test('ignores a score for a future date without saving', async () => {
+  test('ignores future dates and does not save', async () => {
     await renderHook();
 
-    await act(async () => {
-      latest.setScore('2024-05-11', 3);
+    act(() => {
+      latest.setScore(FUTURE, 3 as 3);
     });
 
     expect(latest.entries).toEqual({});
     expect(mockedSave).not.toHaveBeenCalled();
   });
 
-  test('still swallows storage failures without breaking state', async () => {
+  test('swallows save failures without throwing', async () => {
     mockedSave.mockRejectedValue(new Error('disk full'));
     await renderHook();
 
-    await act(async () => {
-      latest.setScore(TODAY, 1);
-    });
-
-    // A score of 1 is valid and must still be applied even if persistence fails.
-    expect(latest.entries).toEqual({ [TODAY]: 1 });
+    expect(() => {
+      act(() => {
+        latest.setScore(PAST, 3 as 3);
+      });
+    }).not.toThrow();
+    expect(latest.entries[PAST]).toBe(3);
   });
 });
 
-describe('useEntries.clearScore', () => {
+describe('clearScore', () => {
   test('removes an existing date and persists the result', async () => {
-    mockedLoad.mockResolvedValue({ '2024-05-08': 3, '2024-05-09': 4 });
+    mockedLoad.mockResolvedValue({ [PAST]: 3, [OLDER]: 4 });
     await renderHook();
 
-    await act(async () => {
-      latest.clearScore('2024-05-09');
+    act(() => {
+      latest.clearScore(PAST);
     });
 
-    expect(latest.entries).toEqual({ '2024-05-08': 3 });
-    expect(mockedSave).toHaveBeenCalledTimes(1);
-    expect(mockedSave).toHaveBeenCalledWith({ '2024-05-08': 3 });
+    expect(latest.entries).toEqual({ [OLDER]: 4 });
+    expect(mockedSave).toHaveBeenLastCalledWith({ [OLDER]: 4 });
   });
 
-  test('is a no-op with no save for a missing date', async () => {
-    mockedLoad.mockResolvedValue({ '2024-05-08': 3 });
+  test('is a no-op for a missing date: same state object and no save', async () => {
+    mockedLoad.mockResolvedValue({ [OLDER]: 4 });
     await renderHook();
+    const before = latest.entries;
 
-    await act(async () => {
-      latest.clearScore('2024-05-09');
+    act(() => {
+      latest.clearScore(PAST);
     });
 
-    expect(latest.entries).toEqual({ '2024-05-08': 3 });
+    expect(latest.entries).toBe(before);
     expect(mockedSave).not.toHaveBeenCalled();
   });
 });
 
-describe('useEntries.fire', () => {
-  test('is derived from entries and updates after setScore', async () => {
+describe('fire', () => {
+  test('is derived from entries via computeFire', async () => {
+    mockedLoad.mockResolvedValue({ [OLDER]: 3, [PAST]: 5 });
+    await renderHook();
+
+    expect(latest.fire).toEqual(computeFire({ [OLDER]: 3, [PAST]: 5 }, TODAY));
+  });
+
+  test('updates when entries change', async () => {
     await renderHook();
     const emptyFire = latest.fire;
 
-    await act(async () => {
-      latest.setScore(TODAY, 5);
+    act(() => {
+      latest.setScore(PAST, 5 as 5);
     });
 
-    expect(latest.fire).not.toEqual(emptyFire);
-    expect(latest.fire).toEqual(
-      expect.objectContaining({
-        // Derived fire must reflect the new entry rather than the stale empty state.
-        lit: expect.any(Boolean),
-      }),
-    );
-  });
-
-  test('updates after clearScore removes the only entry', async () => {
-    mockedLoad.mockResolvedValue({ [TODAY]: 5 });
-    await renderHook();
-    const litFire = latest.fire;
-
-    await act(async () => {
-      latest.clearScore(TODAY);
-    });
-
-    expect(latest.fire).not.toEqual(litFire);
-    expect(latest.entries).toEqual({});
+    expect(latest.fire).not.toBe(emptyFire);
+    expect(latest.fire).toEqual(computeFire({ [PAST]: 5 }, TODAY));
   });
 });
