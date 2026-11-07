@@ -27,7 +27,8 @@
 
 ## Autonomous Fixes Allowed
 
-- Under the current no_autonomy classification, make no autonomous code changes; only report findings.
+- `dead_code`: removing unreferenced functions in src/domain.
+- `complexity_reduction`: splitting overly complex functions in src/domain that have tests.
 - If autonomy is later permitted, limit to prettier formatting and eslint --fix on non-protected files under src/components/Settings or __tests__ with no behavior change.
 
 ## Assisted Fixes Allowed
