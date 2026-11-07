@@ -27,11 +27,12 @@
 
 ## Autonomous Fixes Allowed
 
-- Under the current no_autonomy classification, make no autonomous code changes; only report findings.
+- `dead_code`: removing unreferenced functions in src/badges.
 - If autonomy is later permitted, limit to prettier formatting and eslint --fix on non-protected files under src/components/Settings or __tests__ with no behavior change.
 
 ## Assisted Fixes Allowed
 
+- `complexity_reduction`: splitting overly complex functions in src/badges that have tests.
 - Type-level fixes under strict TypeScript that preserve runtime behavior in src/components and src/hooks, reviewed by a maintainer.
 - Adding missing unit tests for contract guarantees (for example, fire.ts behavior table rows or settingsStore invalid-color fallback) without changing production logic.
 - Dependency patch updates for jest-expo, eslint-config-expo, or @types packages, verified by the full test run.
