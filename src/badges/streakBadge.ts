@@ -4,7 +4,6 @@
 
 export type BadgeMode = 'compact' | 'full' | 'muted';
 
-// Old label helper from the first badge design.
 function legacyBadgeLabel(days: number): string {
   if (days <= 0) {
     return 'none';
