@@ -107,6 +107,68 @@ export interface FlameProps {
 // tops to avoid the body rendering underneath the hearth.
 export const DESIGN_FLAME_BASE_FROM_BOTTOM = 216;
 
+// Pulse-kind lookup: how much a pulse boosts the glow and brightness at its peak.
+// Lookups replace nested ternaries so each kind is declared in one place.
+const PULSE_PEAKS: Record<string, { glow: number; bright: number }> = {
+  brightBurst: { glow: 1.45, bright: 1.24 },
+  warmGlow: { glow: 1.22, bright: 1.08 },
+};
+
+function pulsePeaks(visualKind: string | undefined) {
+  return PULSE_PEAKS[visualKind ?? ''] ?? { glow: 1, bright: 1 };
+}
+
+// Resolve the flame's base point and foot extension from the visible-bottom
+// offset, so the flame sits above the logs regardless of screen size.
+function flameBaseGeometry(
+  height: number,
+  fh: number,
+  footprint: number,
+  edge: string,
+  visibleBottomFromBottom: number | undefined,
+) {
+  const flameFootExtension = edge === 'jagged' || edge === 'crystal' ? 0 : fh * 0.06 * footprint;
+  const resolvedVisibleBottomFromBottom =
+    visibleBottomFromBottom ?? DESIGN_FLAME_BASE_FROM_BOTTOM - flameFootExtension;
+  return {
+    flameFootExtension,
+    baseY: height - resolvedVisibleBottomFromBottom - flameFootExtension,
+  };
+}
+
+// Palette-derived light stops for the glow, halo, tongues, and accents. Pure and
+// memoized by the caller on `palette` + ring flag, so it never runs per frame.
+function buildFlameStops(palette: Palette, ring: boolean) {
+  return {
+    // warm pool of light on the ground (was fixed orange rgba stops)
+    ground: [withAlpha(palette.amber, 0.55), withAlpha(palette.ember, 0.22), withAlpha(palette.ember, 0)],
+    // big soft glow behind the flame — solid disc, or hollow ring (Voidfire)
+    halo: ring
+      ? [withAlpha(palette.ember, 0), withAlpha(palette.amber, 0.38), withAlpha(palette.ember, 0)]
+      : [withAlpha(palette.amber, 0.4), withAlpha(palette.ember, 0.16), withAlpha(palette.ember, 0)],
+    haloPositions: ring ? [0.45, 0.72, 1] : [0, 0.4, 0.7],
+    // base tongue: deep (darkened) red → red → ember → translucent amber tip
+    base: [darken(palette.red, 0.55), palette.red, palette.ember, withAlpha(palette.amber, 0.2)],
+    // mid tongue: darkened red → ember → amber → translucent gold tip
+    mid: [darken(palette.red, 0.8), palette.ember, palette.amber, withAlpha(palette.gold, 0.25)],
+    // accent colors (rings, pulses, bands) — all palette-derived
+    accent: withAlpha(palette.gold, 0.8),
+    accentSoft: withAlpha(palette.gold, 0.5),
+    band: [withAlpha(palette.gold, 0), withAlpha(palette.gold, 0.22), withAlpha(palette.gold, 0)],
+  };
+}
+
+// Dispose every cached layer texture exactly once (textures may share images).
+function disposeTextures(textures: Record<LayerName, LayerTexture | null>) {
+  const disposed = new Set<SkImage>();
+  Object.values(textures).forEach(texture => {
+    if (texture?.image && !disposed.has(texture.image)) {
+      texture.image.dispose();
+      disposed.add(texture.image);
+    }
+  });
+}
+
 // The BonfireDesign 4-layer tongue rig: [name, width×fh, height×fh, blur].
 // Soft tongues (Wisp fragments) draw only mid+inner — no deep base, no hot core.
 const LAYER_RIG = [
@@ -552,6 +614,60 @@ function AuroraBand({ clock, cx, baseY, fh, colors }: {
   );
 }
 
+/**
+ * Behind-the-flame and in-front accents, selected purely by profile data. Kept
+ * as one sub-component so FlameLayer's own branching stays small.
+ */
+function FlameAccents({
+  accents,
+  clock,
+  cx,
+  baseY,
+  fh,
+  stops,
+  position,
+}: {
+  accents: string[];
+  clock: SharedValue<number>;
+  cx: number;
+  baseY: number;
+  fh: number;
+  stops: ReturnType<typeof buildFlameStops>;
+  position: 'behind' | 'front';
+}) {
+  if (position === 'behind') {
+    return (
+      <>
+        {accents.includes('auroraBand') && (
+          <AuroraBand clock={clock} cx={cx} baseY={baseY} fh={fh} colors={stops.band} />
+        )}
+        {accents.includes('shockPulse') && (
+          <ShockPulse clock={clock} cx={cx} baseY={baseY} fh={fh} color={stops.accentSoft} />
+        )}
+        {accents.includes('solarCircle') && (
+          <SolarCircle cx={cx} baseY={baseY} fh={fh} color={stops.accentSoft} />
+        )}
+      </>
+    );
+  }
+  return (
+    <>
+      {accents.includes('orbitRing') && (
+        <OrbitRing clock={clock} cx={cx} baseY={baseY} fh={fh}
+          color={stops.accent} periodMs={7500} />
+      )}
+      {accents.includes('voidRing') && (
+        <>
+          <OrbitRing clock={clock} cx={cx} baseY={baseY} fh={fh}
+            color={stops.accent} periodMs={9000} />
+          <OrbitRing clock={clock} cx={cx} baseY={baseY} fh={fh}
+            color={stops.accentSoft} periodMs={14000} big reverse />
+        </>
+      )}
+    </>
+  );
+}
+
 export function FlameLayer({
   fire,
   activeStyle,
@@ -597,14 +713,7 @@ export function FlameLayer({
 
   // Embered flames burn lower: scale the halo/ground glow and overall brightness
   // by `dim` (1 = unchanged). Color still comes entirely from the `palette` prop.
-  const pulseGlowPeak =
-    pulse?.visualKind === 'brightBurst' ? 1.45
-    : pulse?.visualKind === 'warmGlow' ? 1.22
-    : 1;
-  const pulseBrightPeak =
-    pulse?.visualKind === 'brightBurst' ? 1.24
-    : pulse?.visualKind === 'warmGlow' ? 1.08
-    : 1;
+  const { glow: pulseGlowPeak, bright: pulseBrightPeak } = pulsePeaks(pulse?.visualKind);
   const baseGlow =
     visual.glow *
     dim *
@@ -622,12 +731,14 @@ export function FlameLayer({
   const lit = fire.state === 'lit';
 
   const fh = visual.height * healthVisual.density * (1 + 0.04 * pulseVisualWeight);
-  const flameFootExtension =
-    shape.edge === 'jagged' || shape.edge === 'crystal' ? 0 : fh * 0.06 * shape.footprint;
-  const resolvedVisibleBottomFromBottom =
-    visibleBottomFromBottom ?? DESIGN_FLAME_BASE_FROM_BOTTOM - flameFootExtension;
   const cx = width / 2;
-  const baseY = height - resolvedVisibleBottomFromBottom - flameFootExtension;
+  const { flameFootExtension, baseY } = flameBaseGeometry(
+    height,
+    fh,
+    shape.footprint,
+    shape.edge,
+    visibleBottomFromBottom,
+  );
 
   // ---- Layer geometry: one path per rig layer, with the profile's edge ----
   // Tongues reuse these canonical paths and shape them via their transforms,
@@ -724,26 +835,7 @@ export function FlameLayer({
   // (no hardcoded warm-orange literals), so a blue flame casts blue light and
   // an embered palette dims everything automatically. Memoized on `palette`:
   // recomputed only on flame switch, never per frame (SC-005, ≥120 FPS).
-  const stops = useMemo(
-    () => ({
-      // warm pool of light on the ground (was fixed orange rgba stops)
-      ground: [withAlpha(palette.amber, 0.55), withAlpha(palette.ember, 0.22), withAlpha(palette.ember, 0)],
-      // big soft glow behind the flame — solid disc, or hollow ring (Voidfire)
-      halo: aura.ring
-        ? [withAlpha(palette.ember, 0), withAlpha(palette.amber, 0.38), withAlpha(palette.ember, 0)]
-        : [withAlpha(palette.amber, 0.4), withAlpha(palette.ember, 0.16), withAlpha(palette.ember, 0)],
-      haloPositions: aura.ring ? [0.45, 0.72, 1] : [0, 0.4, 0.7],
-      // base tongue: deep (darkened) red → red → ember → translucent amber tip
-      base: [darken(palette.red, 0.55), palette.red, palette.ember, withAlpha(palette.amber, 0.2)],
-      // mid tongue: darkened red → ember → amber → translucent gold tip
-      mid: [darken(palette.red, 0.8), palette.ember, palette.amber, withAlpha(palette.gold, 0.25)],
-      // accent colors (rings, pulses, bands) — all palette-derived
-      accent: withAlpha(palette.gold, 0.8),
-      accentSoft: withAlpha(palette.gold, 0.5),
-      band: [withAlpha(palette.gold, 0), withAlpha(palette.gold, 0.22), withAlpha(palette.gold, 0)],
-    }),
-    [palette, aura.ring],
-  );
+  const stops = useMemo(() => buildFlameStops(palette, aura.ring), [palette, aura.ring]);
 
   const textures = useMemo((): Record<LayerName, LayerTexture | null> => {
     const make = (layer: (typeof LAYER_RIG)[number]) => {
@@ -762,15 +854,7 @@ export function FlameLayer({
   }, [paths, stops, palette, shape.invertCore, shape.coreScale, fh, cx, baseY]);
 
   useEffect(() => {
-    return () => {
-      const disposed = new Set<SkImage>();
-      Object.values(textures).forEach(texture => {
-        if (texture?.image && !disposed.has(texture.image)) {
-          texture.image.dispose();
-          disposed.add(texture.image);
-        }
-      });
-    };
+    return () => disposeTextures(textures);
   }, [textures]);
 
   // Aura sizing: the baseline oval halo scaled by the profile's aura geometry.
@@ -830,15 +914,15 @@ export function FlameLayer({
       </Group>
 
       {/* ---- behind-the-flame accents (profile data only, never flame id) ---- */}
-      {accents.includes('auroraBand') && (
-        <AuroraBand clock={clock} cx={cx} baseY={baseY} fh={fh} colors={stops.band} />
-      )}
-      {accents.includes('shockPulse') && (
-        <ShockPulse clock={clock} cx={cx} baseY={baseY} fh={fh} color={stops.accentSoft} />
-      )}
-      {accents.includes('solarCircle') && (
-        <SolarCircle cx={cx} baseY={baseY} fh={fh} color={stops.accentSoft} />
-      )}
+      <FlameAccents
+        accents={accents}
+        clock={clock}
+        cx={cx}
+        baseY={baseY}
+        fh={fh}
+        stops={stops}
+        position="behind"
+      />
 
       {/* ---- the flame: profile tongues, additive (screen) + brightness +
               optional hue drift. Each tongue is a BonfireDesign 4-layer stack;
@@ -882,18 +966,15 @@ export function FlameLayer({
       </Group>
 
       {/* ---- orbiting accents drawn over the flame ---- */}
-      {accents.includes('orbitRing') && (
-        <OrbitRing clock={clock} cx={cx} baseY={baseY} fh={fh}
-          color={stops.accent} periodMs={7500} />
-      )}
-      {accents.includes('voidRing') && (
-        <>
-          <OrbitRing clock={clock} cx={cx} baseY={baseY} fh={fh}
-            color={stops.accent} periodMs={9000} />
-          <OrbitRing clock={clock} cx={cx} baseY={baseY} fh={fh}
-            color={stops.accentSoft} periodMs={14000} big reverse />
-        </>
-      )}
+      <FlameAccents
+        accents={accents}
+        clock={clock}
+        cx={cx}
+        baseY={baseY}
+        fh={fh}
+        stops={stops}
+        position="front"
+      />
     </Group>
   );
 }
