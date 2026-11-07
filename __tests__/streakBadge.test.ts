@@ -2,7 +2,7 @@
  * streakBadge.test.ts — unit tests for the streak badge label.
  */
 
-import { streakBadge } from '../src/domain/streakBadge';
+import { streakBadge } from '../src/badges/streakBadge';
 
 describe('streakBadge', () => {
   it('shows unlit for a fresh user', () => {
